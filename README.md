@@ -1,15 +1,24 @@
 # Metashot
 
-A TypeScript REST API service that generates PNG images from Metabase embed URLs using Playwright and uploads them to S3-compatible storage.
+Metabase is a fantastic business intelligence tool. However, one of the things that I've run into when implementing it
+at different places is the fact that there's no way to programatically extract a screen cap of a question created in
+metabase.
+
+You can get at the raw data, even metadata about the question. But Metabase _itself_ won't just generate a visualization
+for you that you can throw into other tools. That changes today.
+
+Metashot is a TypeScript REST API service that generates PNG images from Metabase embed URLs using Playwright. It then
+uploads them to S3-compatible storage and returned the presigned download url. This makes it suitable to integrate with
+tools that need to ask for a fully realized image given some inputs.
 
 ## Features
 
-- Generate PNG screenshots from any URL (designed for Metabase embeds)
-- Upload images to S3-compatible storage (MinIO)
+- Generate PNG screenshots from Metabase questions
+- Upload images to S3-compatible storage
 - Return presigned URLs with configurable expiration
 - Configurable viewport dimensions and wait conditions
+- Optional authorization token requirement
 - Health check endpoint
-- TypeScript with full type safety
 
 ## Quick Start
 
@@ -79,9 +88,10 @@ The `docker-compose.yml` provides:
 
 Environment variables:
 - `PORT` - Server port (default: 8080)
+- `AUTH_TOKEN` - The token requesters are required to present to get an image
 - `S3_ENDPOINT` - S3 endpoint URL
 - `S3_ACCESS_KEY_ID` - S3 access key
 - `S3_SECRET_ACCESS_KEY` - S3 secret key
 - `S3_BUCKET` - S3 bucket name
 - `S3_REGION` - S3 region
-- `PRESIGNED_URL_EXPIRY` - Presigned URL expiry in seconds
+- `PRESIGNED_URL_EXPIRY` - Presigned URL expiry in seconds (default 1hr)
