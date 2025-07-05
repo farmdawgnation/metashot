@@ -1,9 +1,7 @@
 export interface ScreenshotRequest {
-  url: string;
+  questionId: number;
   width?: number;
   height?: number;
-  waitForSelector?: string;
-  timeout?: number;
 }
 
 export interface ScreenshotResponse {

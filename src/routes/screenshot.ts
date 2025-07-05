@@ -3,6 +3,7 @@ import { ScreenshotService } from '../services/screenshot';
 import { StorageService } from '../services/storage';
 import { ScreenshotRequest, ScreenshotResponse, ErrorResponse } from '../types';
 import { Config } from '../config';
+import { generateMetabaseEmbedUrl } from '../metabase';
 
 const router = Router();
 const screenshotService = new ScreenshotService();
@@ -21,14 +22,15 @@ router.post('/screenshot', async (req: Request, res: Response<ScreenshotResponse
   try {
     const request: ScreenshotRequest = req.body;
 
-    if (!request.url) {
+    if (!request.questionId) {
       return res.status(400).json({
         error: 'BadRequest',
-        message: 'URL is required',
+        message: 'questionId is required',
       });
     }
 
-    const screenshot = await screenshotService.takeScreenshot(request);
+    const embedUrl = generateMetabaseEmbedUrl({ questionId: request.questionId });
+    const screenshot = await screenshotService.takeScreenshot(request, embedUrl);
     const fileName = storageService.generateFileName();
     
     await storageService.uploadImage(screenshot, fileName);

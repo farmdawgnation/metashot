@@ -5,6 +5,10 @@ config();
 export const Config = {
   port: parseInt(process.env.PORT || '8080', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
+  metabase: {
+    siteUrl: process.env.METABASE_SITE_URL || 'http://localhost:3000',
+    secretKey: process.env.METABASE_SECRET_KEY || '',
+  },
   s3: {
     endpoint: process.env.S3_ENDPOINT || 'http://localhost:9000',
     accessKeyId: process.env.S3_ACCESS_KEY_ID || 'minioadmin',

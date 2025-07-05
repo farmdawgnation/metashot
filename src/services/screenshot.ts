@@ -18,7 +18,7 @@ export class ScreenshotService {
     }
   }
 
-  async takeScreenshot(request: ScreenshotRequest): Promise<Buffer> {
+  async takeScreenshot(request: ScreenshotRequest, embedUrl: string): Promise<Buffer> {
     if (!this.browser) {
       throw new Error('Screenshot service not initialized');
     }
@@ -31,16 +31,14 @@ export class ScreenshotService {
         height: request.height || 1080,
       });
 
-      await page.goto(request.url, {
-        timeout: request.timeout || 30000,
+      await page.goto(embedUrl, {
+        timeout: 30000,
         waitUntil: 'networkidle',
       });
 
-      if (request.waitForSelector) {
-        await page.waitForSelector(request.waitForSelector, {
-          timeout: request.timeout || 30000,
-        });
-      }
+      await page.waitForSelector('div[data-testid=chart-container]', {
+        timeout: 30000,
+      });
 
       const screenshot = await page.screenshot({
         type: 'png',
