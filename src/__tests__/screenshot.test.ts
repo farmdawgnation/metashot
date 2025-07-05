@@ -28,10 +28,11 @@ describe('ScreenshotService', () => {
   describe('takeScreenshot', () => {
     it('should throw error if not initialized', async () => {
       const request: ScreenshotRequest = {
-        url: 'https://example.com',
+        questionId: 1,
       };
+      const embedUrl = 'https://example.com';
 
-      await expect(screenshotService.takeScreenshot(request)).rejects.toThrow(
+      await expect(screenshotService.takeScreenshot(request, embedUrl)).rejects.toThrow(
         'Screenshot service not initialized'
       );
     });
@@ -40,14 +41,15 @@ describe('ScreenshotService', () => {
       await screenshotService.initialize();
       
       const request: ScreenshotRequest = {
-        url: 'data:text/html,<html><body><h1>Test</h1></body></html>',
+        questionId: 1,
         width: 800,
         height: 600,
       };
+      const embedUrl = 'data:text/html,<html><body><h1>Test</h1><div data-testid="chart-container">Chart</div></body></html>';
 
-      const screenshot = await screenshotService.takeScreenshot(request);
+      const screenshot = await screenshotService.takeScreenshot(request, embedUrl);
       expect(screenshot).toBeInstanceOf(Buffer);
       expect(screenshot.length).toBeGreaterThan(0);
-    }, 30000);
+    }, 60000);
   });
 });
