@@ -5,10 +5,17 @@ export class ScreenshotService {
   private browser: Browser | null = null;
 
   async initialize(): Promise<void> {
-    this.browser = await chromium.launch({
+    const launchOptions: any = {
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
+    };
+
+    // Use system Chromium if available (for Docker deployment)
+    if (process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH) {
+      launchOptions.executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
+    }
+
+    this.browser = await chromium.launch(launchOptions);
   }
 
   async close(): Promise<void> {
