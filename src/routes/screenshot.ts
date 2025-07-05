@@ -4,6 +4,7 @@ import { StorageService } from '../services/storage';
 import { ScreenshotRequest, ScreenshotResponse, ErrorResponse } from '../types';
 import { Config } from '../config';
 import { generateMetabaseEmbedUrl } from '../metabase';
+import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
 const screenshotService = new ScreenshotService();
@@ -18,7 +19,7 @@ export async function closeServices(): Promise<void> {
   await screenshotService.close();
 }
 
-router.post('/screenshot', async (req: Request, res: Response<ScreenshotResponse | ErrorResponse>) => {
+router.post('/screenshot', authenticateToken, async (req: Request, res: Response<ScreenshotResponse | ErrorResponse>) => {
   try {
     const request: ScreenshotRequest = req.body;
 

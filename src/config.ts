@@ -5,6 +5,7 @@ config();
 export const Config = {
   port: parseInt(process.env.PORT || '8080', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
+  authToken: process.env.AUTH_TOKEN || undefined,
   metabase: {
     siteUrl: process.env.METABASE_SITE_URL || 'http://localhost:3000',
     secretKey: process.env.METABASE_SECRET_KEY || '',
