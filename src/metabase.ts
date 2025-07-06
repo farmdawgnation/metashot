@@ -16,6 +16,11 @@ export function generateMetabaseEmbedUrl({
   bordered = true,
   titled = true
 }: MetabaseEmbedParams): string {
+  // Check if secret key is configured
+  if (!Config.metabase.secretKey) {
+    throw new Error('Metabase secret key is not configured');
+  }
+
   const payload = {
     resource: { question: questionId },
     params,
