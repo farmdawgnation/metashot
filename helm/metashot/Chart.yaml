@@ -1,0 +1,19 @@
+apiVersion: v2
+name: metashot
+description: A Helm chart for Metashot - Generate PNG images from Metabase embed URLs
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - metabase
+  - screenshot
+  - image-generation
+  - s3
+home: https://github.com/farmdawgnation/metashot
+sources:
+  - https://github.com/farmdawgnation/metashot
+maintainers:
+  - name: Matt Farmer
+    email: matt@frmr.me
+annotations:
+  category: Productivity

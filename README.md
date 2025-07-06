@@ -78,6 +78,47 @@ Health check endpoint.
 - `npm run lint` - Run linting
 - `npm run typecheck` - Run TypeScript type checking
 
+## Deployment
+
+### Docker
+
+A Docker container is available for easy deployment:
+
+```bash
+# Build the Docker image
+docker build -t metashot .
+
+# Run the container
+docker run -d -p 8080:8080 --name metashot metashot
+```
+
+### Kubernetes with Helm
+
+A Helm chart is provided for Kubernetes deployment:
+
+```bash
+# Install with basic configuration
+helm install metashot helm/metashot \
+  --set env.METABASE_BASE_URL=https://metabase.example.com \
+  --set env.S3_BUCKET=my-screenshots-bucket
+
+# Install with external secrets
+helm install metashot helm/metashot \
+  --set secretRefs.s3SecretAccessKey.enabled=true \
+  --set secretRefs.s3SecretAccessKey.secretName=metashot-secrets \
+  --set secretRefs.s3SecretAccessKey.secretKey=s3-secret-key \
+  --set secretRefs.authToken.enabled=true \
+  --set secretRefs.authToken.secretName=metashot-secrets \
+  --set secretRefs.authToken.secretKey=auth-token
+```
+
+The Helm chart supports:
+- External secret references for sensitive environment variables
+- Ingress configuration
+- Horizontal Pod Autoscaling
+- Custom resource limits and requests
+- Extra Kubernetes objects deployment
+
 ## Docker Services
 
 The `docker-compose.yml` provides:
