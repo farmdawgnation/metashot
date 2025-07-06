@@ -3,6 +3,16 @@ name: Publish Helm Chart
 on:
   release:
     types: [published]
+  workflow_run:
+    workflows: ["Release Please"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag to publish (e.g., v1.0.0)'
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -11,11 +21,55 @@ permissions:
 jobs:
   publish-helm:
     runs-on: ubuntu-latest
+    # Only run on workflow_run if the release job was successful, or always run for manual/release triggers
+    if: |
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+      (github.event_name == 'workflow_dispatch') ||
+      (github.event_name == 'release')
     
     steps:
+    - name: Check if release was created (for workflow_run)
+      id: check-release
+      if: github.event_name == 'workflow_run'
+      run: |
+        # Check if a release was created in the last 5 minutes
+        recent_release=$(gh release list --limit 1 --json tagName,createdAt --jq '.[0] | select(.createdAt > (now - 300)) | .tagName // empty')
+        if [ -z "$recent_release" ]; then
+          echo "No recent release found, skipping..."
+          echo "should_run=false" >> $GITHUB_OUTPUT
+        else
+          echo "Recent release found: $recent_release"
+          echo "should_run=true" >> $GITHUB_OUTPUT
+        fi
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Exit if no release was created
+      if: github.event_name == 'workflow_run' && steps.check-release.outputs.should_run == 'false'
+      run: exit 0
+    
+    - name: Determine release info
+      id: release-info
+      run: |
+        if [ "${{ github.event_name }}" = "release" ]; then
+          echo "tag=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          echo "checkout_ref=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+        elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "tag=${{ github.event.inputs.release_tag }}" >> $GITHUB_OUTPUT
+          echo "checkout_ref=${{ github.event.inputs.release_tag }}" >> $GITHUB_OUTPUT
+        elif [ "${{ github.event_name }}" = "workflow_run" ]; then
+          # Get the latest release tag from the repository
+          latest_tag=$(gh release list --limit 1 --json tagName --jq '.[0].tagName')
+          echo "tag=$latest_tag" >> $GITHUB_OUTPUT
+          echo "checkout_ref=$latest_tag" >> $GITHUB_OUTPUT
+        fi
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
     - name: Checkout code
       uses: actions/checkout@v4
       with:
+        ref: ${{ steps.release-info.outputs.checkout_ref }}
         fetch-depth: 0
     
     - name: Configure Git
@@ -31,7 +85,7 @@ jobs:
     - name: Update Helm chart versions
       run: |
         # Remove 'v' prefix from tag if present
-        VERSION=$(echo "${{ github.ref_name }}" | sed 's/^v//')
+        VERSION=$(echo "${{ steps.release-info.outputs.tag }}" | sed 's/^v//')
         
         # Update chart version and appVersion
         sed -i "s/version: .*/version: $VERSION/" helm/metashot/Chart.yaml
@@ -70,15 +124,16 @@ jobs:
         
         # Commit and push the changes
         git add .
-        git commit -m "Add Helm chart ${{ github.ref_name }}" || echo "No changes to commit"
+        git commit -m "Add Helm chart ${{ steps.release-info.outputs.tag }}" || echo "No changes to commit"
         git push origin gh-pages
     
     - name: Upload chart as release asset
-      uses: actions/upload-release-asset@v1
+      run: |
+        VERSION=$(echo "${{ steps.release-info.outputs.tag }}" | sed 's/^v//')
+        CHART_FILE="./helm-packages/metashot-${VERSION}.tgz"
+        ASSET_NAME="metashot-helm-chart-${{ steps.release-info.outputs.tag }}.tgz"
+        
+        # Upload the chart as a release asset
+        gh release upload "${{ steps.release-info.outputs.tag }}" "$CHART_FILE" --clobber --repo ${{ github.repository }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./helm-packages/metashot-$(echo "${{ github.ref_name }}" | sed 's/^v//').tgz
-        asset_name: metashot-helm-chart-${{ github.ref_name }}.tgz
-        asset_content_type: application/gzip

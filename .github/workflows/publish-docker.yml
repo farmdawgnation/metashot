@@ -3,6 +3,16 @@ name: Publish Docker Image
 on:
   release:
     types: [published]
+  workflow_run:
+    workflows: ["Release Please"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag to publish (e.g., v1.0.0)'
+        required: true
+        type: string
 
 env:
   REGISTRY: ghcr.io
@@ -11,13 +21,58 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    # Only run on workflow_run if the release job was successful, or always run for manual/release triggers
+    if: |
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+      (github.event_name == 'workflow_dispatch') ||
+      (github.event_name == 'release')
     permissions:
       contents: read
       packages: write
     
     steps:
+    - name: Check if release was created (for workflow_run)
+      id: check-release
+      if: github.event_name == 'workflow_run'
+      run: |
+        # Check if a release was created in the last 5 minutes
+        recent_release=$(gh release list --limit 1 --json tagName,createdAt --jq '.[0] | select(.createdAt > (now - 300)) | .tagName // empty')
+        if [ -z "$recent_release" ]; then
+          echo "No recent release found, skipping..."
+          echo "should_run=false" >> $GITHUB_OUTPUT
+        else
+          echo "Recent release found: $recent_release"
+          echo "should_run=true" >> $GITHUB_OUTPUT
+        fi
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Exit if no release was created
+      if: github.event_name == 'workflow_run' && steps.check-release.outputs.should_run == 'false'
+      run: exit 0
+    
+    - name: Determine release info
+      id: release-info
+      run: |
+        if [ "${{ github.event_name }}" = "release" ]; then
+          echo "tag=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          echo "checkout_ref=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+        elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "tag=${{ github.event.inputs.release_tag }}" >> $GITHUB_OUTPUT
+          echo "checkout_ref=${{ github.event.inputs.release_tag }}" >> $GITHUB_OUTPUT
+        elif [ "${{ github.event_name }}" = "workflow_run" ]; then
+          # Get the latest release tag from the repository
+          latest_tag=$(gh release list --limit 1 --json tagName --jq '.[0].tagName')
+          echo "tag=$latest_tag" >> $GITHUB_OUTPUT
+          echo "checkout_ref=$latest_tag" >> $GITHUB_OUTPUT
+        fi
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        ref: ${{ steps.release-info.outputs.checkout_ref }}
     
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
@@ -35,12 +90,10 @@ jobs:
       with:
         images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
         tags: |
-          type=ref,event=branch
-          type=ref,event=pr
-          type=semver,pattern={{version}}
-          type=semver,pattern={{major}}.{{minor}}
-          type=semver,pattern={{major}}
-          type=sha
+          type=semver,pattern={{version}},value=${{ steps.release-info.outputs.tag }}
+          type=semver,pattern={{major}}.{{minor}},value=${{ steps.release-info.outputs.tag }}
+          type=semver,pattern={{major}},value=${{ steps.release-info.outputs.tag }}
+          type=raw,value=latest
     
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
