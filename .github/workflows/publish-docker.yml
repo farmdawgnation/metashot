@@ -21,9 +21,9 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    # Only run on workflow_run if the release job was successful, or always run for manual/release triggers
+    # Only run on workflow_run if the release job was successful AND created a release, or always run for manual/release triggers
     if: |
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.outputs.release_created == 'true') ||
       (github.event_name == 'workflow_dispatch') ||
       (github.event_name == 'release')
     permissions:
@@ -31,29 +31,6 @@ jobs:
       packages: write
     
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Check if release was created (for workflow_run)
-      id: check-release
-      if: github.event_name == 'workflow_run'
-      run: |
-        # Check if a release was created in the last 5 minutes
-        recent_release=$(gh release list --limit 1 --json tagName,createdAt --jq '.[0] | select(.createdAt > (now - 300)) | .tagName // empty')
-        if [ -z "$recent_release" ]; then
-          echo "No recent release found, skipping..."
-          echo "should_run=false" >> $GITHUB_OUTPUT
-        else
-          echo "Recent release found: $recent_release"
-          echo "should_run=true" >> $GITHUB_OUTPUT
-        fi
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    
-    - name: Exit if no release was created
-      if: github.event_name == 'workflow_run' && steps.check-release.outputs.should_run == 'false'
-      run: exit 0
-    
     - name: Determine release info
       id: release-info
       run: |
@@ -64,10 +41,9 @@ jobs:
           echo "tag=${{ github.event.inputs.release_tag }}" >> $GITHUB_OUTPUT
           echo "checkout_ref=${{ github.event.inputs.release_tag }}" >> $GITHUB_OUTPUT
         elif [ "${{ github.event_name }}" = "workflow_run" ]; then
-          # Get the latest release tag from the repository
-          latest_tag=$(gh release list --limit 1 --json tagName --jq '.[0].tagName')
-          echo "tag=$latest_tag" >> $GITHUB_OUTPUT
-          echo "checkout_ref=$latest_tag" >> $GITHUB_OUTPUT
+          # Use the tag from the Release Please workflow output
+          echo "tag=${{ github.event.workflow_run.outputs.tag_name }}" >> $GITHUB_OUTPUT
+          echo "checkout_ref=${{ github.event.workflow_run.outputs.tag_name }}" >> $GITHUB_OUTPUT
         fi
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
