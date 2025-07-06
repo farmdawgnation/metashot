@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.1.1](https://github.com/farmdawgnation/metashot/compare/v1.1.0...v1.1.1) (2025-07-06)
+
+
+### Bug Fixes
+
+* add missing license ([b54c840](https://github.com/farmdawgnation/metashot/commit/b54c840d9bbd2cf887b50414257e358b4cfc2d73))
+* checkout before ci run ([4242409](https://github.com/farmdawgnation/metashot/commit/4242409adee62fad4227e5ae25821bf6605e242f))
+* checkout before invoking gh ([656a049](https://github.com/farmdawgnation/metashot/commit/656a04942ab532023886911ccd31f8c49dbd7bfb))
+* clean up publish jobs ([e172502](https://github.com/farmdawgnation/metashot/commit/e172502dc9523b35d868409c5a410fecc188804d))
+* ordering of publish helm job was wrong ([1398cde](https://github.com/farmdawgnation/metashot/commit/1398cde9e1541bd773265fe29401b2fa96daa290))
+* roll that back I guess ([350321b](https://github.com/farmdawgnation/metashot/commit/350321b66a13b389a47b064bdab82cb0ba4dd3a8))
+* switching to oci publishing ([a88a522](https://github.com/farmdawgnation/metashot/commit/a88a5224a92bb0ccbb4b65cdfbce8a449313710a))
+
 ## [1.1.0](https://github.com/farmdawgnation/metashot/compare/v1.0.0...v1.1.0) (2025-07-06)
 
 
