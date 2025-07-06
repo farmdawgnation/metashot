@@ -28,9 +28,6 @@ jobs:
       (github.event_name == 'release')
     
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
     - name: Check if release was created (for workflow_run)
       id: check-release
       if: github.event_name == 'workflow_run'
@@ -115,8 +112,8 @@ jobs:
     
     - name: Set up GitHub Pages Helm repository
       run: |
-        # Checkout
-        git checkout gh-pages
+        # Clone the gh-pages branch
+        git clone --single-branch --branch gh-pages https://github.com/${{ github.repository }}.git gh-pages
         
         # Copy the packaged chart to gh-pages
         cp ./helm-packages/*.tgz gh-pages/
