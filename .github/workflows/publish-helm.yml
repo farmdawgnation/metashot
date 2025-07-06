@@ -28,6 +28,9 @@ jobs:
       (github.event_name == 'release')
     
     steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
     - name: Check if release was created (for workflow_run)
       id: check-release
       if: github.event_name == 'workflow_run'
