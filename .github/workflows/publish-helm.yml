@@ -72,15 +72,14 @@ jobs:
         ref: ${{ steps.release-info.outputs.checkout_ref }}
         fetch-depth: 0
     
-    - name: Configure Git
-      run: |
-        git config user.name "$GITHUB_ACTOR"
-        git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
-    
     - name: Set up Helm
       uses: azure/setup-helm@v4
       with:
         version: 'v3.14.0'
+    
+    - name: Log in to Container Registry
+      run: |
+        echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
     
     - name: Update Helm chart versions
       run: |
@@ -94,46 +93,14 @@ jobs:
         # Update default image tag in values.yaml
         sed -i "s/tag: .*/tag: \"$VERSION\"/" helm/metashot/values.yaml
     
-    - name: Package Helm chart
-      run: |
-        helm package helm/metashot --destination ./helm-packages
-    
-    - name: Create GitHub Pages branch if it doesn't exist
-      run: |
-        if ! git ls-remote --heads origin gh-pages | grep -q gh-pages; then
-          git checkout --orphan gh-pages
-          git rm -rf .
-          echo "# Helm Chart Repository" > README.md
-          git add README.md
-          git commit -m "Initial commit for GitHub Pages"
-          git push origin gh-pages
-          git checkout main
-        fi
-    
-    - name: Set up GitHub Pages Helm repository
-      run: |
-        # Clone the gh-pages branch
-        git clone --single-branch --branch gh-pages https://github.com/${{ github.repository }}.git gh-pages
-        
-        # Copy the packaged chart to gh-pages
-        cp ./helm-packages/*.tgz gh-pages/
-        
-        # Generate or update the index
-        cd gh-pages
-        helm repo index . --url https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
-        
-        # Commit and push the changes
-        git add .
-        git commit -m "Add Helm chart ${{ steps.release-info.outputs.tag }}" || echo "No changes to commit"
-        git push origin gh-pages
-    
-    - name: Upload chart as release asset
+    - name: Package and push Helm chart
       run: |
         VERSION=$(echo "${{ steps.release-info.outputs.tag }}" | sed 's/^v//')
-        CHART_FILE="./helm-packages/metashot-${VERSION}.tgz"
-        ASSET_NAME="metashot-helm-chart-${{ steps.release-info.outputs.tag }}.tgz"
+        CHART_NAME="metashot"
+        OCI_URL="oci://ghcr.io/${{ github.repository_owner }}/helm"
         
-        # Upload the chart as a release asset
-        gh release upload "${{ steps.release-info.outputs.tag }}" "$CHART_FILE" --clobber --repo ${{ github.repository }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # Package the chart
+        helm package helm/metashot --destination ./helm-packages
+        
+        # Push the chart to OCI registry
+        helm push "./helm-packages/${CHART_NAME}-${VERSION}.tgz" "${OCI_URL}"
