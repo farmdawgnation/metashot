@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/farmdawgnation/metashot/compare/v1.0.0...v1.1.0) (2025-07-06)
+
+
+### Features
+
+* enhance publish workflows with conditional triggers ([9e65685](https://github.com/farmdawgnation/metashot/commit/9e6568517b849b0f418cd68dedf88651103ff540))
+
 ## 1.0.0 (2025-07-06)
 
 
