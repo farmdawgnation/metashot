@@ -115,8 +115,8 @@ jobs:
     
     - name: Set up GitHub Pages Helm repository
       run: |
-        # Clone the gh-pages branch
-        git clone --single-branch --branch gh-pages https://github.com/${{ github.repository }}.git gh-pages
+        # Checkout
+        git checkout gh-pages
         
         # Copy the packaged chart to gh-pages
         cp ./helm-packages/*.tgz gh-pages/
