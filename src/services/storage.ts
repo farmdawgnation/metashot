@@ -5,14 +5,20 @@ export class StorageService {
   private s3: AWS.S3;
 
   constructor() {
-    this.s3 = new AWS.S3({
-      endpoint: Config.s3.endpoint,
+    const s3Config: AWS.S3.ClientConfiguration = {
       accessKeyId: Config.s3.accessKeyId,
       secretAccessKey: Config.s3.secretAccessKey,
       region: Config.s3.region,
-      s3ForcePathStyle: true,
       signatureVersion: 'v4',
-    });
+    };
+
+    // Only set endpoint and s3ForcePathStyle for non-AWS S3 services (like MinIO)
+    if (Config.s3.endpoint) {
+      s3Config.endpoint = Config.s3.endpoint;
+      s3Config.s3ForcePathStyle = true;
+    }
+
+    this.s3 = new AWS.S3(s3Config);
   }
 
   async ensureBucketExists(): Promise<void> {
