@@ -21,14 +21,32 @@ permissions:
 jobs:
   publish-helm:
     runs-on: ubuntu-latest
-    # Only run on workflow_run if the release job was successful AND created a release, or always run for manual/release triggers
+    # Only run on workflow_run if the release job was successful, or always run for manual/release triggers
     if: |
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.outputs.release_created == 'true') ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
       (github.event_name == 'workflow_dispatch') ||
       (github.event_name == 'release')
     
     steps:
-    - name: Determine release info
+    - name: Determine release info (pre-checkout)
+      id: release-info-pre
+      run: |
+        if [ "${{ github.event_name }}" = "release" ]; then
+          echo "checkout_ref=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+        elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "checkout_ref=${{ github.event.inputs.release_tag }}" >> $GITHUB_OUTPUT
+        elif [ "${{ github.event_name }}" = "workflow_run" ]; then
+          # For workflow_run, checkout main first to get latest release
+          echo "checkout_ref=main" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ steps.release-info-pre.outputs.checkout_ref }}
+        fetch-depth: 0
+    
+    - name: Determine final release info
       id: release-info
       run: |
         if [ "${{ github.event_name }}" = "release" ]; then
@@ -38,18 +56,16 @@ jobs:
           echo "tag=${{ github.event.inputs.release_tag }}" >> $GITHUB_OUTPUT
           echo "checkout_ref=${{ github.event.inputs.release_tag }}" >> $GITHUB_OUTPUT
         elif [ "${{ github.event_name }}" = "workflow_run" ]; then
-          # Use the tag from the Release Please workflow output
-          echo "tag=${{ github.event.workflow_run.outputs.tag_name }}" >> $GITHUB_OUTPUT
-          echo "checkout_ref=${{ github.event.workflow_run.outputs.tag_name }}" >> $GITHUB_OUTPUT
+          # Get the latest release tag since workflow_run outputs aren't reliable
+          LATEST_TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName')
+          echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          echo "checkout_ref=$LATEST_TAG" >> $GITHUB_OUTPUT
+          # Checkout the actual release tag
+          git fetch origin
+          git checkout "$LATEST_TAG"
         fi
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        ref: ${{ steps.release-info.outputs.checkout_ref }}
-        fetch-depth: 0
     
     - name: Set up Helm
       uses: azure/setup-helm@v4
