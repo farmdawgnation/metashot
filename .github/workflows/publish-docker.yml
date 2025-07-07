@@ -47,6 +47,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         ref: ${{ steps.release-info-pre.outputs.checkout_ref }}
+        fetch-depth: 0
     
     - name: Determine final release info
       id: release-info
