@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.1.2](https://github.com/farmdawgnation/metashot/compare/v1.1.1...v1.1.2) (2025-07-07)
+
+
+### Bug Fixes
+
+* let's try this combination of code for cicd ([5f774a2](https://github.com/farmdawgnation/metashot/commit/5f774a275ffcd2890ef49f50416b77ee4db6e801))
+* resolve workflow_run trigger issues in publish workflows ([5b9c103](https://github.com/farmdawgnation/metashot/commit/5b9c10333bea8d6e89887876bb67d628661fb5c4))
+* set fetch depth so tags are retrieved ([0457f3d](https://github.com/farmdawgnation/metashot/commit/0457f3de8141ab2b9ec1145bf7fcdfebea0dedf5))
+
 ## [1.1.1](https://github.com/farmdawgnation/metashot/compare/v1.1.0...v1.1.1) (2025-07-06)
 
 
