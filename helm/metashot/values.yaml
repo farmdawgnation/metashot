@@ -82,33 +82,32 @@ affinity: {}
 
 # Environment variables
 env:
+  # Server configuration
+  PORT: "8080"
+  NODE_ENV: "production"
+  
   # Metabase configuration
-  METABASE_BASE_URL: ""
-  METABASE_SECRET_KEY: ""
+  METABASE_SITE_URL: ""
   
   # S3 configuration
   S3_BUCKET: ""
-  S3_REGION: ""
+  S3_REGION: "us-east-1"
   S3_ACCESS_KEY_ID: ""
-  S3_ENDPOINT: ""
+  # S3_ENDPOINT: ""  # Only needed if not using AWS S3 directly (e.g., for MinIO or other S3-compatible services)
   
-  # Server configuration
-  PORT: "8080"
+  # Optional configuration
+  PRESIGNED_URL_EXPIRY: "3600"
 
-# Secret references for sensitive environment variables
-# These should reference existing secrets in the cluster
-secretRefs:
-  # Reference to secret containing S3_SECRET_ACCESS_KEY
-  s3SecretAccessKey:
-    enabled: false
-    secretName: ""
-    secretKey: ""
-  
-  # Reference to secret containing AUTH_TOKEN
-  authToken:
-    enabled: false
-    secretName: ""
-    secretKey: ""
+# Environment variables from external sources (secrets, configmaps, etc.)
+# This allows injecting environment variables from different sources
+# Use this to provide sensitive values like AUTH_TOKEN, METABASE_SECRET_KEY, S3_SECRET_ACCESS_KEY
+envFrom: []
+# Examples:
+# envFrom:
+#   - secretRef:
+#       name: metashot-secrets
+#   - configMapRef:
+#       name: metashot-config
 
 # Health check configuration
 livenessProbe:

@@ -42,20 +42,10 @@ spec:
             - name: {{ $key }}
               value: {{ $value | quote }}
             {{- end }}
-            {{- if .Values.secretRefs.s3SecretAccessKey.enabled }}
-            - name: S3_SECRET_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.secretRefs.s3SecretAccessKey.secretName }}
-                  key: {{ .Values.secretRefs.s3SecretAccessKey.secretKey }}
-            {{- end }}
-            {{- if .Values.secretRefs.authToken.enabled }}
-            - name: AUTH_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Values.secretRefs.authToken.secretName }}
-                  key: {{ .Values.secretRefs.authToken.secretKey }}
-            {{- end }}
+          {{- if .Values.envFrom }}
+          envFrom:
+            {{- toYaml .Values.envFrom | nindent 12 }}
+          {{- end }}
           {{- if .Values.livenessProbe.enabled }}
           livenessProbe:
             {{- toYaml .Values.livenessProbe.httpGet | nindent 12 }}

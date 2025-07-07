@@ -130,21 +130,17 @@ A Helm chart is provided for Kubernetes deployment:
 # Install with basic configuration
 helm install metashot helm/metashot \
   --set env.METABASE_SITE_URL=https://metabase.example.com \
-  --set env.METABASE_SECRET_KEY=your-metabase-secret-key \
   --set env.S3_BUCKET=my-screenshots-bucket
 
-# Install with external secrets
+# Install with external secrets using envFrom
 helm install metashot helm/metashot \
-  --set secretRefs.s3SecretAccessKey.enabled=true \
-  --set secretRefs.s3SecretAccessKey.secretName=metashot-secrets \
-  --set secretRefs.s3SecretAccessKey.secretKey=s3-secret-key \
-  --set secretRefs.authToken.enabled=true \
-  --set secretRefs.authToken.secretName=metashot-secrets \
-  --set secretRefs.authToken.secretKey=auth-token
+  --set env.METABASE_SITE_URL=https://metabase.example.com \
+  --set env.S3_BUCKET=my-screenshots-bucket \
+  --set envFrom[0].secretRef.name=metashot-secrets
 ```
 
 The Helm chart supports:
-- External secret references for sensitive environment variables
+- Environment variables from external sources (secrets, configmaps) via `envFrom`
 - Ingress configuration
 - Horizontal Pod Autoscaling
 - Custom resource limits and requests
