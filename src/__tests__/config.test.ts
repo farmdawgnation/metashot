@@ -5,7 +5,7 @@ describe('Config', () => {
     expect(Config.port).toBe(8080);
     expect(Config.nodeEnv).toBe('test');
     expect(Config.authToken).toBeUndefined();
-    expect(Config.s3.endpoint).toBe('http://localhost:9000');
+    expect(Config.s3.endpoint).toBeUndefined();
     expect(Config.s3.accessKeyId).toBe('minioadmin');
     expect(Config.s3.secretAccessKey).toBe('minioadmin');
     expect(Config.s3.bucket).toBe('metashot-images');

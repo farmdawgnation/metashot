@@ -11,7 +11,7 @@ export const Config = {
     secretKey: process.env.METABASE_SECRET_KEY || '',
   },
   s3: {
-    endpoint: process.env.S3_ENDPOINT || 'http://localhost:9000',
+    endpoint: process.env.S3_ENDPOINT || undefined,
     accessKeyId: process.env.S3_ACCESS_KEY_ID || 'minioadmin',
     secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || 'minioadmin',
     bucket: process.env.S3_BUCKET || 'metashot-images',
