@@ -3,10 +3,8 @@ name: Publish Docker Image
 on:
   release:
     types: [published]
-  workflow_run:
-    workflows: ["Release Please"]
-    types: [completed]
-    branches: [main]
+  repository_dispatch:
+    types: [release-created]
   workflow_dispatch:
     inputs:
       release_tag:
@@ -21,11 +19,11 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    # Only run on workflow_run if the release job was successful, or always run for manual/release triggers
+    # Only run for manual/release/repository_dispatch triggers
     if: |
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
       (github.event_name == 'workflow_dispatch') ||
-      (github.event_name == 'release')
+      (github.event_name == 'release') ||
+      (github.event_name == 'repository_dispatch' && github.event.action == 'release-created')
     permissions:
       contents: read
       packages: write
@@ -38,9 +36,8 @@ jobs:
           echo "checkout_ref=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
         elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
           echo "checkout_ref=${{ github.event.inputs.release_tag }}" >> $GITHUB_OUTPUT
-        elif [ "${{ github.event_name }}" = "workflow_run" ]; then
-          # For workflow_run, checkout main first to get latest release
-          echo "checkout_ref=main" >> $GITHUB_OUTPUT
+        elif [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+          echo "checkout_ref=${{ github.event.client_payload.tag_name }}" >> $GITHUB_OUTPUT
         fi
     
     - name: Checkout code
@@ -58,14 +55,9 @@ jobs:
         elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
           echo "tag=${{ github.event.inputs.release_tag }}" >> $GITHUB_OUTPUT
           echo "checkout_ref=${{ github.event.inputs.release_tag }}" >> $GITHUB_OUTPUT
-        elif [ "${{ github.event_name }}" = "workflow_run" ]; then
-          # Get the latest release tag since workflow_run outputs aren't reliable
-          LATEST_TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName')
-          echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
-          echo "checkout_ref=$LATEST_TAG" >> $GITHUB_OUTPUT
-          # Checkout the actual release tag
-          git fetch origin
-          git checkout "$LATEST_TAG"
+        elif [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+          echo "tag=${{ github.event.client_payload.tag_name }}" >> $GITHUB_OUTPUT
+          echo "checkout_ref=${{ github.event.client_payload.tag_name }}" >> $GITHUB_OUTPUT
         fi
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
