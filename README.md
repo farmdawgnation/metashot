@@ -7,17 +7,19 @@ metabase.
 You can get at the raw data, even metadata about the question. But Metabase _itself_ won't just generate a visualization
 for you that you can throw into other tools. That changes today.
 
-Metashot is a TypeScript REST API service that generates PNG images from Metabase embed URLs using Playwright. It then
-uploads them to S3-compatible storage and returned the presigned download url. This makes it suitable to integrate with
-tools that need to ask for a fully realized image given some inputs.
+Metashot is a TypeScript REST API service that generates PNG images from Metabase questions using Playwright. It automatically
+generates secure embed URLs using JWT tokens, captures screenshots of the visualizations, uploads them to S3-compatible 
+storage, and returns presigned download URLs. This makes it suitable to integrate with tools that need to ask for a 
+fully realized image given a Metabase question ID.
 
 ## Features
 
-- Generate PNG screenshots from Metabase questions
+- Generate PNG screenshots from Metabase questions using question IDs
+- Automatic JWT-based embed URL generation for secure access
 - Upload images to S3-compatible storage
 - Return presigned URLs with configurable expiration
-- Configurable viewport dimensions and wait conditions
-- Optional authorization token requirement
+- Configurable viewport dimensions
+- Bearer token authentication support
 - Health check endpoint
 
 ## Quick Start
@@ -44,19 +46,40 @@ npm run dev
 
 ## API Endpoints
 
+### GET /
+Returns API information.
+
+**Response:**
+```json
+{
+  "name": "Metashot API",
+  "version": "1.0.0",
+  "description": "Generate PNG images from Metabase embed URLs"
+}
+```
+
 ### POST /api/screenshot
-Generate a screenshot from a URL.
+Generate a screenshot from a Metabase question.
+
+**Authentication:**
+If `AUTH_TOKEN` is configured, requests must include:
+```
+Authorization: Bearer <token>
+```
 
 **Request Body:**
 ```json
 {
-  "url": "https://example.com/metabase/embed",
+  "questionId": 123,
   "width": 1920,
-  "height": 1080,
-  "waitForSelector": ".dashboard",
-  "timeout": 30000
+  "height": 1080
 }
 ```
+
+**Parameters:**
+- `questionId` (required): The ID of the Metabase question to screenshot
+- `width` (optional): Viewport width in pixels (default: 1920)
+- `height` (optional): Viewport height in pixels (default: 1080)
 
 **Response:**
 ```json
@@ -68,7 +91,14 @@ Generate a screenshot from a URL.
 ```
 
 ### GET /api/health
-Health check endpoint.
+Health check endpoint (no authentication required).
+
+**Response:**
+```json
+{
+  "status": "ok"
+}
+```
 
 ## Development
 
@@ -99,7 +129,8 @@ A Helm chart is provided for Kubernetes deployment:
 ```bash
 # Install with basic configuration
 helm install metashot helm/metashot \
-  --set env.METABASE_BASE_URL=https://metabase.example.com \
+  --set env.METABASE_SITE_URL=https://metabase.example.com \
+  --set env.METABASE_SECRET_KEY=your-metabase-secret-key \
   --set env.S3_BUCKET=my-screenshots-bucket
 
 # Install with external secrets
@@ -125,14 +156,35 @@ The `docker-compose.yml` provides:
 - **MinIO** (S3-compatible storage) on port 9000
 - **Metabase** for testing embed URLs on port 3000
 
+## How It Works
+
+Metashot integrates directly with Metabase's embedding feature:
+
+1. **Prerequisites**: The Metabase question must be shared via public embedding (in Metabase, go to the question > sharing icon > "Embed this question in an application")
+2. You provide a Metabase question ID
+3. Metashot generates a secure JWT token using your `METABASE_SECRET_KEY`
+4. It creates an embed URL for the question with appropriate parameters
+5. Playwright navigates to the embed URL and waits for the visualization to load
+6. A full-page screenshot is captured in PNG format
+7. The image is uploaded to S3-compatible storage
+8. A presigned URL is returned for temporary access to the image
+
+The generated embed URLs include:
+- JWT token with configurable expiry (default: 10 minutes)
+- Bordered and titled display (configurable in future versions)
+- Support for passing additional parameters to Metabase questions
+
 ## Configuration
 
 Environment variables:
 - `PORT` - Server port (default: 8080)
-- `AUTH_TOKEN` - The token requesters are required to present to get an image
+- `NODE_ENV` - Environment (development/production)
+- `AUTH_TOKEN` - Bearer token required for API authentication (optional)
+- `METABASE_SITE_URL` - Base URL of your Metabase instance (e.g., https://metabase.example.com)
+- `METABASE_SECRET_KEY` - Secret key for generating Metabase embed tokens (found in Metabase Admin > Settings > Embedding)
 - `S3_ENDPOINT` - S3 endpoint URL
 - `S3_ACCESS_KEY_ID` - S3 access key
 - `S3_SECRET_ACCESS_KEY` - S3 secret key
 - `S3_BUCKET` - S3 bucket name
 - `S3_REGION` - S3 region
-- `PRESIGNED_URL_EXPIRY` - Presigned URL expiry in seconds (default 1hr)
+- `PRESIGNED_URL_EXPIRY` - Presigned URL expiry in seconds (default: 3600, 1 hour)
