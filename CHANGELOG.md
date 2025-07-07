@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/farmdawgnation/metashot/compare/v1.1.2...v1.2.0) (2025-07-07)
+
+
+### Features
+
+* **storage:** configure storage to default to AWS S3 ([#14](https://github.com/farmdawgnation/metashot/issues/14)) ([2e58e96](https://github.com/farmdawgnation/metashot/commit/2e58e964d08dcccc90ece6f5c5e6e700ec7c8e8b))
+
 ## [1.1.2](https://github.com/farmdawgnation/metashot/compare/v1.1.1...v1.1.2) (2025-07-07)
 
 
