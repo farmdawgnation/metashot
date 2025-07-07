@@ -182,7 +182,7 @@ Environment variables:
 - `AUTH_TOKEN` - Bearer token required for API authentication (optional)
 - `METABASE_SITE_URL` - Base URL of your Metabase instance (e.g., https://metabase.example.com)
 - `METABASE_SECRET_KEY` - Secret key for generating Metabase embed tokens (found in Metabase Admin > Settings > Embedding)
-- `S3_ENDPOINT` - S3 endpoint URL
+- `S3_ENDPOINT` - S3 endpoint URL (optional, defaults to AWS S3; set for MinIO or other S3-compatible services)
 - `S3_ACCESS_KEY_ID` - S3 access key
 - `S3_SECRET_ACCESS_KEY` - S3 secret key
 - `S3_BUCKET` - S3 bucket name
