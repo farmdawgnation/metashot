@@ -36,24 +36,25 @@
    - POST /api/screenshot - Generate screenshots from Metabase questions
    - GET /api/health - Health check endpoint
 
-{{- if .Values.secretRefs.authToken.enabled }}
+{{- if .Values.env.AUTH_TOKEN }}
 4. Authentication:
    Authentication is enabled. Include the Authorization header with your requests:
    Authorization: Bearer <your-token>
 {{- else }}
 4. Authentication:
-   Authentication is not configured. Set secretRefs.authToken.enabled=true to enable authentication.
+   Authentication is not configured. Set env.AUTH_TOKEN or use envFrom to provide AUTH_TOKEN to enable authentication.
 {{- end }}
 
 5. Environment Configuration:
    Make sure the following environment variables are configured:
-   - METABASE_BASE_URL: Your Metabase instance URL
-   - METABASE_SECRET_KEY: Your Metabase secret key for embedding
+   - METABASE_SITE_URL: Your Metabase instance URL
+   - METABASE_SECRET_KEY: Your Metabase secret key for embedding (use envFrom for security)
    - S3_BUCKET: S3 bucket name for storing screenshots
    - S3_REGION: S3 region
    - S3_ACCESS_KEY_ID: S3 access key ID
-   {{- if .Values.secretRefs.s3SecretAccessKey.enabled }}
-   - S3_SECRET_ACCESS_KEY: Configured via secret reference
+   - S3_SECRET_ACCESS_KEY: Use envFrom to provide this securely
+   {{- if .Values.envFrom }}
+   - Environment variables are configured via envFrom sources
    {{- else }}
-   - S3_SECRET_ACCESS_KEY: Not configured via secret reference
+   - Consider using envFrom to inject sensitive environment variables from secrets
    {{- end }}
