@@ -2,7 +2,7 @@
 replicaCount: 1
 
 image:
-  repository: metashot
+  repository: ghcr.io/farmdawgnation/metashot
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
@@ -30,7 +30,7 @@ securityContext:
   capabilities:
     drop:
     - ALL
-  readOnlyRootFilesystem: true
+  readOnlyRootFilesystem: false
   runAsNonRoot: true
   runAsUser: 1001
 
