@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.2](https://github.com/farmdawgnation/metashot/compare/v1.2.1...v1.2.2) (2025-07-08)
+
+
+### Bug Fixes
+
+* **helm:** correct various issues in chart ([0dfeeb2](https://github.com/farmdawgnation/metashot/commit/0dfeeb27a3b35d5acc14ed7f578fac0a96aaeb2e))
+
 ## [1.2.1](https://github.com/farmdawgnation/metashot/compare/v1.2.0...v1.2.1) (2025-07-08)
 
 
