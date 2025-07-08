@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/farmdawgnation/metashot/compare/v1.2.0...v1.2.1) (2025-07-08)
+
+
+### Bug Fixes
+
+* **helm:** fix probe definitions ([224a064](https://github.com/farmdawgnation/metashot/commit/224a06479cf5bdcc69b8bc3238c775a97e8fa06e))
+
 ## [1.2.0](https://github.com/farmdawgnation/metashot/compare/v1.1.2...v1.2.0) (2025-07-07)
 
 
