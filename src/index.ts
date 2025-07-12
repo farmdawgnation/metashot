@@ -3,8 +3,27 @@ import cors from 'cors';
 import helmet from 'helmet';
 import screenshotRouter, { initializeServices, closeServices } from './routes/screenshot';
 import { Config } from './config';
+import packageJson from '../package.json';
 
 const app = express();
+
+// Request logging middleware
+app.use((req, res, next) => {
+  const startTime = Date.now();
+  const originalSend = res.send;
+  
+  res.send = function(body) {
+    const endTime = Date.now();
+    const responseTime = endTime - startTime;
+    const timestamp = new Date().toISOString();
+    
+    console.log(`[${timestamp}] ${req.method} ${req.originalUrl} - ${res.statusCode} - ${responseTime}ms`);
+    
+    return originalSend.call(this, body);
+  };
+  
+  next();
+});
 
 app.use(helmet());
 app.use(cors());
