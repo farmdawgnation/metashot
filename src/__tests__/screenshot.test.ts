@@ -64,7 +64,7 @@ describe('ScreenshotService', () => {
           width: 800,
           height: 600,
         };
-        const embedUrl = 'data:text/html,<html><body><h1>Test</h1><div data-testid="chart-container">Chart</div></body></html>';
+        const embedUrl = 'data:text/html,<html><body><h1>Test</h1><div data-testid="embed-frame">Chart</div></body></html>';
 
         const screenshot = await screenshotService.takeScreenshot(request, embedUrl);
         expect(screenshot).toBeInstanceOf(Buffer);

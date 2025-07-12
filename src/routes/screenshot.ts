@@ -6,6 +6,14 @@ import { Config } from '../config';
 import { generateMetabaseEmbedUrl } from '../metabase';
 import { authenticateToken } from '../middleware/auth';
 import { logger } from '../logger';
+import {
+  screenshotRequests,
+  concurrentRequests,
+  metabaseUrlGeneration,
+  metabaseUrlErrors,
+  metricsUtils,
+} from '../metrics';
+import { tracingUtils } from '../tracing';
 
 const router = Router();
 const screenshotService = new ScreenshotService();
@@ -21,17 +29,38 @@ export async function closeServices(): Promise<void> {
 }
 
 router.post('/screenshot', authenticateToken, async (req: Request, res: Response<ScreenshotResponse | ErrorResponse>) => {
+  concurrentRequests.inc();
+  
   try {
     const request: ScreenshotRequest = req.body;
 
     if (!request.questionId) {
+      screenshotRequests.inc({ status: 'error' });
       return res.status(400).json({
         error: 'BadRequest',
         message: 'questionId is required',
       });
     }
 
-    const embedUrl = generateMetabaseEmbedUrl({ questionId: request.questionId });
+    // Track Metabase URL generation with tracing
+    const embedUrl = await tracingUtils.traceOperation(
+      'metabase.generate_embed_url',
+      async () => {
+        try {
+          return await metricsUtils.trackDuration(
+            metabaseUrlGeneration,
+            { status: 'success' },
+            async () => generateMetabaseEmbedUrl({ questionId: request.questionId })
+          );
+        } catch (metabaseError: any) {
+          metabaseUrlErrors.inc({ error_type: metabaseError.message.includes('secret') ? 'missing_secret' : 'unknown' });
+          metabaseUrlGeneration.observe({ status: 'error' }, Date.now() / 1000);
+          throw metabaseError;
+        }
+      },
+      { 'metabase.questionId': request.questionId }
+    );
+
     const screenshot = await screenshotService.takeScreenshot(request, embedUrl);
     const fileName = storageService.generateFileName();
     
@@ -40,17 +69,21 @@ router.post('/screenshot', authenticateToken, async (req: Request, res: Response
 
     const expiresAt = new Date(Date.now() + Config.presignedUrlExpiry * 1000).toISOString();
 
+    screenshotRequests.inc({ status: 'success' });
     res.json({
       presignedUrl,
       fileName,
       expiresAt,
     });
   } catch (error) {
+    screenshotRequests.inc({ status: 'error' });
     logger.error({ error, questionId: req.body.questionId }, 'Screenshot error');
     res.status(500).json({
       error: 'InternalServerError',
       message: 'Failed to generate screenshot',
     });
+  } finally {
+    concurrentRequests.dec();
   }
 });
 

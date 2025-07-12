@@ -1,12 +1,29 @@
+// Initialize tracing before any other imports
+import { initializeTracing } from './tracing';
+initializeTracing();
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import promBundle from 'express-prom-bundle';
 import screenshotRouter, { initializeServices, closeServices } from './routes/screenshot';
 import { Config } from './config';
 import { logger, createRequestLogger } from './logger';
+import { register } from './metrics';
 import packageJson from '../package.json';
 
 const app = express();
+
+// Prometheus metrics middleware (before other middleware)
+const metricsMiddleware = promBundle({
+  includeMethod: true,
+  includePath: true,
+  includeStatusCode: true,
+  includeUp: true,
+  customLabels: { service: 'metashot' },
+  bypass: (req) => req.path === '/metrics', // Don't track metrics endpoint itself
+});
+app.use(metricsMiddleware);
 
 // Request logging middleware
 const requestLogger = createRequestLogger();
@@ -38,6 +55,17 @@ app.get('/', (req, res) => {
     version: packageJson.version,
     description: packageJson.description,
   });
+});
+
+// Prometheus metrics endpoint
+app.get('/metrics', async (_req, res) => {
+  try {
+    res.set('Content-Type', register.contentType);
+    res.end(await register.metrics());
+  } catch (error) {
+    logger.error({ error }, 'Failed to generate metrics');
+    res.status(500).end();
+  }
 });
 
 async function startServer(): Promise<void> {
