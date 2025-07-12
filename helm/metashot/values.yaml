@@ -1,30 +1,39 @@
 # Default values for metashot
+# -- Number of replicas for the Metashot deployment
 replicaCount: 1
 
 image:
+  # -- Docker image repository for Metashot
   repository: ghcr.io/farmdawgnation/metashot
+  # -- Image pull policy
   pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
+  # -- Overrides the image tag whose default is the chart appVersion
   tag: ""
 
+# -- Secrets for pulling images from private registries
 imagePullSecrets: []
+# -- Override the name of the chart
 nameOverride: ""
+# -- Override the full name of the chart
 fullnameOverride: ""
 
 serviceAccount:
-  # Specifies whether a service account should be created
+  # -- Specifies whether a service account should be created
   create: true
-  # Annotations to add to the service account
+  # -- Annotations to add to the service account
   annotations: {}
-  # The name of the service account to use.
+  # -- The name of the service account to use.
   # If not set and create is true, a name is generated using the fullname template
   name: ""
 
+# -- Annotations to add to the pod
 podAnnotations: {}
 
+# -- Security context for the pod
 podSecurityContext:
   fsGroup: 1001
 
+# -- Security context for the container
 securityContext:
   allowPrivilegeEscalation: false
   capabilities:
@@ -35,26 +44,35 @@ securityContext:
   runAsUser: 1001
 
 service:
+  # -- Kubernetes service type
   type: ClusterIP
+  # -- Kubernetes service port
   port: 80
+  # -- Target port for the Metashot application
   targetPort: 8080
 
 ingress:
+  # -- Enable ingress controller resource
   enabled: false
+  # -- IngressClass that will be used to implement the Ingress
   className: ""
+  # -- Additional annotations for the Ingress resource
   annotations: {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
+  # -- An array with the hostname(s) to be covered by the ingress record
   hosts:
     - host: chart-example.local
       paths:
         - path: /
           pathType: Prefix
+  # -- TLS configuration for the ingress
   tls: []
   #  - secretName: chart-example-tls
   #    hosts:
   #      - chart-example.local
 
+# -- Resource limits and requests for the Metashot container
 resources:
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
@@ -68,38 +86,53 @@ resources:
     memory: 128Mi
 
 autoscaling:
+  # -- Enable horizontal pod autoscaling
   enabled: false
+  # -- Minimum number of replicas
   minReplicas: 1
+  # -- Maximum number of replicas
   maxReplicas: 100
+  # -- Target CPU utilization percentage for autoscaling
   targetCPUUtilizationPercentage: 80
+  # -- Target memory utilization percentage for autoscaling
   # targetMemoryUtilizationPercentage: 80
 
+# -- Node labels for pod assignment
 nodeSelector: {}
 
+# -- Tolerations for pod assignment
 tolerations: []
 
+# -- Affinity for pod assignment
 affinity: {}
 
-# Environment variables
+# -- Environment variables for Metashot configuration
 env:
-  # Server configuration
+  # -- Port for the Metashot server
   PORT: "8080"
+  # -- Node.js environment mode
   NODE_ENV: "production"
   
-  # Metabase configuration
+  # -- Metabase site URL for authentication and API access
+  # @default -- Must be provided by user
   METABASE_SITE_URL: ""
   
-  # S3 configuration
+  # -- S3 bucket name for storing generated images
+  # @default -- Must be provided by user
   S3_BUCKET: ""
+  # -- AWS region for S3 bucket
   S3_REGION: "us-east-1"
+  # -- AWS access key ID for S3 access
+  # @default -- Must be provided by user (recommend using envFrom with secrets)
   S3_ACCESS_KEY_ID: ""
-  # S3_ENDPOINT: ""  # Only needed if not using AWS S3 directly (e.g., for MinIO or other S3-compatible services)
+  # -- S3 endpoint URL (only needed for non-AWS S3 services like MinIO)
+  # S3_ENDPOINT: ""
   
-  # Optional configuration
+  # -- Expiry time in seconds for presigned URLs
   PRESIGNED_URL_EXPIRY: "3600"
 
-# Environment variables from external sources (secrets, configmaps, etc.)
-# This allows injecting environment variables from different sources
+# -- Environment variables from external sources (secrets, configmaps, etc.)
+# This allows injecting environment variables from different sources.
 # Use this to provide sensitive values like AUTH_TOKEN, METABASE_SECRET_KEY, S3_SECRET_ACCESS_KEY
 envFrom: []
 # Examples:
@@ -109,33 +142,50 @@ envFrom: []
 #   - configMapRef:
 #       name: metashot-config
 
-# Health check configuration
+# -- Liveness probe configuration
 livenessProbe:
+  # -- Enable liveness probe
   enabled: true
   httpGet:
+    # -- Path for liveness probe
     path: /api/health
+    # -- Port for liveness probe
     port: http
+  # -- Initial delay seconds for liveness probe
   initialDelaySeconds: 30
+  # -- Period seconds for liveness probe
   periodSeconds: 10
+  # -- Timeout seconds for liveness probe
   timeoutSeconds: 5
+  # -- Failure threshold for liveness probe
   failureThreshold: 3
 
+# -- Readiness probe configuration
 readinessProbe:
+  # -- Enable readiness probe
   enabled: true
   httpGet:
+    # -- Path for readiness probe
     path: /api/health
+    # -- Port for readiness probe
     port: http
+  # -- Initial delay seconds for readiness probe
   initialDelaySeconds: 5
+  # -- Period seconds for readiness probe
   periodSeconds: 5
+  # -- Timeout seconds for readiness probe
   timeoutSeconds: 3
+  # -- Failure threshold for readiness probe
   failureThreshold: 3
 
-# Additional volumes and volume mounts
+# -- Additional volumes to be mounted
 volumes: []
+
+# -- Additional volume mounts for the container
 volumeMounts: []
 
-# Extra objects to deploy alongside the application
-# This allows deploying arbitrary Kubernetes objects
+# -- Extra Kubernetes objects to deploy alongside the application
+# This allows deploying arbitrary Kubernetes objects like secrets, configmaps, jobs, etc.
 extraObjects: []
 # Example:
 # extraObjects:

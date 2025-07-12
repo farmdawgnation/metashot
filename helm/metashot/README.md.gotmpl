@@ -1,0 +1,130 @@
+{{ template "chart.header" . }}
+{{ template "chart.deprecationWarning" . }}
+
+{{ template "chart.badgesSection" . }}
+
+{{ template "chart.description" . }}
+
+{{ template "chart.homepageLine" . }}
+
+{{ template "chart.sourcesSection" . }}
+
+## Installation
+
+Add the repository and install the chart:
+
+```bash
+# Add the repository (if published)
+helm repo add metashot https://farmdawgnation.github.io/metashot
+
+# Install the chart
+helm install metashot metashot/metashot
+```
+
+Or install directly from the source:
+
+```bash
+# Clone the repository
+git clone https://github.com/farmdawgnation/metashot.git
+cd metashot
+
+# Install the chart
+helm install metashot ./helm/metashot
+```
+
+## Configuration
+
+Metashot requires configuration of several environment variables to work properly:
+
+### Required Configuration
+
+You **must** provide the following values:
+
+- `env.METABASE_SITE_URL`: The URL of your Metabase instance
+- `env.S3_BUCKET`: The S3 bucket name for storing generated images
+- `env.S3_ACCESS_KEY_ID`: AWS access key for S3 access
+- `S3_SECRET_ACCESS_KEY`: AWS secret key (provided via envFrom)
+- `METABASE_SECRET_KEY`: Metabase secret key (provided via envFrom)
+
+### Secure Configuration Example
+
+Create a secret for sensitive values:
+
+```yaml
+# metashot-secrets.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: metashot-secrets
+type: Opaque
+stringData:
+  S3_SECRET_ACCESS_KEY: "your-s3-secret-key"
+  METABASE_SECRET_KEY: "your-metabase-secret-key"
+  AUTH_TOKEN: "your-auth-token"
+```
+
+Then configure the chart to use the secret:
+
+```yaml
+# values.yaml
+env:
+  METABASE_SITE_URL: "https://metabase.example.com"
+  S3_BUCKET: "my-metashot-bucket"
+  S3_ACCESS_KEY_ID: "AKIAIOSFODNN7EXAMPLE"
+
+envFrom:
+  - secretRef:
+      name: metashot-secrets
+```
+
+### Ingress Configuration
+
+To expose Metashot externally:
+
+```yaml
+# values.yaml
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: metashot.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: metashot-tls
+      hosts:
+        - metashot.example.com
+```
+
+## Usage
+
+Once deployed, Metashot provides endpoints for generating screenshots:
+
+- `GET /api/health` - Health check endpoint
+- `POST /api/screenshot` - Generate screenshot from Metabase embed URL
+- `GET /api/screenshot/:id` - Retrieve generated screenshot
+
+## Upgrading
+
+To upgrade the chart:
+
+```bash
+helm upgrade metashot metashot/metashot
+```
+
+## Uninstallation
+
+To uninstall the chart:
+
+```bash
+helm uninstall metashot
+```
+
+{{ template "chart.requirementsSection" . }}
+
+{{ template "chart.valuesSection" . }}
+
+{{ template "helm-docs.versionFooter" . }}

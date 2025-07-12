@@ -124,7 +124,7 @@ docker run -d -p 8080:8080 --name metashot metashot
 
 ### Kubernetes with Helm
 
-A Helm chart is provided for Kubernetes deployment:
+A Helm chart is provided for Kubernetes deployment with comprehensive configuration options:
 
 ```bash
 # Install with basic configuration
@@ -139,12 +139,55 @@ helm install metashot helm/metashot \
   --set envFrom[0].secretRef.name=metashot-secrets
 ```
 
+#### Helm Chart Features
+
 The Helm chart supports:
 - Environment variables from external sources (secrets, configmaps) via `envFrom`
-- Ingress configuration
+- Ingress configuration with TLS support
 - Horizontal Pod Autoscaling
 - Custom resource limits and requests
 - Extra Kubernetes objects deployment
+- Configurable health checks
+- Security contexts and pod security policies
+- Volume mounts and persistent storage
+
+#### Chart Documentation
+
+The Helm chart includes comprehensive documentation with:
+- Complete values table with descriptions
+- Installation and configuration examples
+- Security best practices
+- Upgrade and uninstallation instructions
+
+See the [Helm Chart README](./helm/metashot/README.md) for detailed configuration options and examples.
+
+#### Quick Start with Helm
+
+1. **Create a secret for sensitive values:**
+```bash
+kubectl create secret generic metashot-secrets \
+  --from-literal=S3_SECRET_ACCESS_KEY=your-s3-secret-key \
+  --from-literal=METABASE_SECRET_KEY=your-metabase-secret-key \
+  --from-literal=AUTH_TOKEN=your-auth-token
+```
+
+2. **Install the chart:**
+```bash
+helm install metashot ./helm/metashot \
+  --set env.METABASE_SITE_URL=https://metabase.example.com \
+  --set env.S3_BUCKET=my-screenshots-bucket \
+  --set env.S3_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE \
+  --set envFrom[0].secretRef.name=metashot-secrets
+```
+
+3. **Enable ingress for external access:**
+```bash
+helm upgrade metashot ./helm/metashot \
+  --set ingress.enabled=true \
+  --set ingress.hosts[0].host=metashot.example.com \
+  --set ingress.hosts[0].paths[0].path=/ \
+  --set ingress.hosts[0].paths[0].pathType=Prefix
+```
 
 ## Docker Services
 
