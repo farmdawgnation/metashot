@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.4.0](https://github.com/farmdawgnation/metashot/compare/metashot-v1.3.0...metashot-v1.4.0) (2025-07-12)
+
+
+### Features
+
+* upgrade to awssdkv3 ([3d626d1](https://github.com/farmdawgnation/metashot/commit/3d626d11613f673b32dd8de4c1691d5ff952bbaf))
+
+
+### Bug Fixes
+
+* correct selector for different viz types ([70df513](https://github.com/farmdawgnation/metashot/commit/70df5133a2a5c060c93fcd3877a9da9f8ac7bdd3))
+
 ## [1.3.0](https://github.com/farmdawgnation/metashot/compare/metashot-v1.2.2...metashot-v1.3.0) (2025-07-12)
 
 
