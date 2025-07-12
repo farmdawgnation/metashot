@@ -43,7 +43,7 @@ export class ScreenshotService {
         waitUntil: 'networkidle',
       });
 
-      await page.waitForSelector('div[data-testid=chart-container]', {
+      await page.waitForSelector('div[data-testid=embed-frame]', {
         timeout: 30000,
       });
 
