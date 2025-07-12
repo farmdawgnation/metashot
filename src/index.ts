@@ -3,11 +3,13 @@ import cors from 'cors';
 import helmet from 'helmet';
 import screenshotRouter, { initializeServices, closeServices } from './routes/screenshot';
 import { Config } from './config';
+import { logger, createRequestLogger } from './logger';
 import packageJson from '../package.json';
 
 const app = express();
 
 // Request logging middleware
+const requestLogger = createRequestLogger();
 app.use((req, res, next) => {
   const startTime = Date.now();
   const originalSend = res.send;
@@ -15,9 +17,8 @@ app.use((req, res, next) => {
   res.send = function(body) {
     const endTime = Date.now();
     const responseTime = endTime - startTime;
-    const timestamp = new Date().toISOString();
     
-    console.log(`[${timestamp}] ${req.method} ${req.originalUrl} - ${res.statusCode} - ${responseTime}ms`);
+    requestLogger.logRequest(req.method, req.originalUrl, res.statusCode, responseTime);
     
     return originalSend.call(this, body);
   };
@@ -44,11 +45,11 @@ async function startServer(): Promise<void> {
     await initializeServices();
     
     const server = app.listen(Config.port, () => {
-      console.log(`Server running on port ${Config.port}`);
+      logger.info({ port: Config.port }, `Server running on port ${Config.port}`);
     });
 
     process.on('SIGTERM', async () => {
-      console.log('Received SIGTERM, shutting down gracefully');
+      logger.info('Received SIGTERM, shutting down gracefully');
       await closeServices();
       server.close(() => {
         process.exit(0);
@@ -56,14 +57,14 @@ async function startServer(): Promise<void> {
     });
 
     process.on('SIGINT', async () => {
-      console.log('Received SIGINT, shutting down gracefully');
+      logger.info('Received SIGINT, shutting down gracefully');
       await closeServices();
       server.close(() => {
         process.exit(0);
       });
     });
   } catch (error) {
-    console.error('Failed to start server:', error);
+    logger.error({ error }, 'Failed to start server');
     process.exit(1);
   }
 }

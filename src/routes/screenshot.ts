@@ -5,6 +5,7 @@ import { ScreenshotRequest, ScreenshotResponse, ErrorResponse } from '../types';
 import { Config } from '../config';
 import { generateMetabaseEmbedUrl } from '../metabase';
 import { authenticateToken } from '../middleware/auth';
+import { logger } from '../logger';
 
 const router = Router();
 const screenshotService = new ScreenshotService();
@@ -45,7 +46,7 @@ router.post('/screenshot', authenticateToken, async (req: Request, res: Response
       expiresAt,
     });
   } catch (error) {
-    console.error('Screenshot error:', error);
+    logger.error({ error, questionId: req.body.questionId }, 'Screenshot error');
     res.status(500).json({
       error: 'InternalServerError',
       message: 'Failed to generate screenshot',
