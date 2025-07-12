@@ -33,9 +33,9 @@ app.use('/api', screenshotRouter);
 
 app.get('/', (req, res) => {
   res.json({
-    name: 'Metashot API',
-    version: '1.0.0',
-    description: 'Generate PNG images from Metabase embed URLs',
+    name: packageJson.name,
+    version: packageJson.version,
+    description: packageJson.description,
   });
 });
 
