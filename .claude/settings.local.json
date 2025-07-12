@@ -4,7 +4,8 @@
       "Bash(mkdir:*)",
       "Bash(npm run test:*)",
       "Bash(npm run typecheck:*)",
-      "Bash(npm run lint)"
+      "Bash(npm run lint)",
+      "WebFetch(domain:docs.aws.amazon.com)"
     ],
     "deny": []
   }
