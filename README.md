@@ -72,7 +72,10 @@ Authorization: Bearer <token>
 {
   "questionId": 123,
   "width": 1920,
-  "height": 1080
+  "height": 1080,
+  "params": {
+    "parameter_name": "value"
+  }
 }
 ```
 
@@ -80,6 +83,7 @@ Authorization: Bearer <token>
 - `questionId` (required): The ID of the Metabase question to screenshot
 - `width` (optional): Viewport width in pixels (default: 1920)
 - `height` (optional): Viewport height in pixels (default: 1080)
+- `params` (optional): Object containing Metabase parameters to pass to the question
 
 **Response:**
 ```json
@@ -96,9 +100,19 @@ Health check endpoint (no authentication required).
 **Response:**
 ```json
 {
-  "status": "ok"
+  "status": "healthy",
+  "timestamp": "2024-01-01T12:00:00.000Z"
 }
 ```
+
+### GET /metrics
+Prometheus metrics endpoint for monitoring (no authentication required).
+
+**Response:**
+Prometheus metrics in text format, including:
+- HTTP request metrics (duration, count, status codes)
+- Application-specific metrics
+- System metrics
 
 ## Development
 
