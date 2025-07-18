@@ -63,6 +63,7 @@ describe('ScreenshotService', () => {
           questionId: 1,
           width: 800,
           height: 600,
+          params: { userId: 123, region: 'us-west' },
         };
         const embedUrl = 'data:text/html,<html><body><h1>Test</h1><div data-testid="embed-frame">Chart</div></body></html>';
 

@@ -2,6 +2,7 @@ export interface ScreenshotRequest {
   questionId: number;
   width?: number;
   height?: number;
+  params?: Record<string, any>;
 }
 
 export interface ScreenshotResponse {

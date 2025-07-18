@@ -101,5 +101,18 @@ describe('Screenshot API with Authentication', () => {
         timestamp: expect.any(String),
       });
     });
+
+    it('should accept requests with parameters', async () => {
+      const response = await request(app)
+        .post('/api/screenshot')
+        .set('Authorization', 'Bearer test-token-123')
+        .send({ 
+          questionId: 1, 
+          params: { userId: 123, region: 'us-west' }
+        });
+
+      expect(response.status).not.toBe(401);
+      expect(response.status).not.toBe(400);
+    });
   });
 });

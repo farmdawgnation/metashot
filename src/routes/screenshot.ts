@@ -50,7 +50,10 @@ router.post('/screenshot', authenticateToken, async (req: Request, res: Response
           return await metricsUtils.trackDuration(
             metabaseUrlGeneration,
             { status: 'success' },
-            async () => generateMetabaseEmbedUrl({ questionId: request.questionId })
+            async () => generateMetabaseEmbedUrl({ 
+              questionId: request.questionId,
+              params: request.params 
+            })
           );
         } catch (metabaseError: any) {
           metabaseUrlErrors.inc({ error_type: metabaseError.message.includes('secret') ? 'missing_secret' : 'unknown' });
