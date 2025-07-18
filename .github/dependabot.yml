@@ -8,6 +8,4 @@ updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "weekly"
-    ignore:
-      - dependency-type: "development"
+      interval: "quarterly"
