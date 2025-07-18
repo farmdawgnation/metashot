@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.4.0](https://github.com/farmdawgnation/metashot/compare/metashot-v1.3.0...metashot-v1.4.0) (2025-07-18)
+
+
+### Features
+
+* add structured JSON logging with pino ([e800f39](https://github.com/farmdawgnation/metashot/commit/e800f3975a97c403d0dc7ce7df3fba556ed66cc8))
+* add support for Metabase parameters in screenshot API ([12a95b3](https://github.com/farmdawgnation/metashot/commit/12a95b3464051feb79093bed8aa279557fc68375))
+* implement comprehensive observability with Prometheus metrics and OpenTelemetry tracing ([e46736a](https://github.com/farmdawgnation/metashot/commit/e46736ad996fdfd5ebb66e47f85c47f02a9ffba2))
+* report package information from package.json ([c9f3136](https://github.com/farmdawgnation/metashot/commit/c9f3136d85d6f9384b1f847dc8b833d3e0de548c))
+* request logging support ([49f25ba](https://github.com/farmdawgnation/metashot/commit/49f25badda58480324652300ec59a2920af3c41b))
+* update Express from 4.x to 5.1.0 ([#28](https://github.com/farmdawgnation/metashot/issues/28)) ([1bc75d7](https://github.com/farmdawgnation/metashot/commit/1bc75d7d176c067126592d8c2592e2d392191f84))
+* upgrade to awssdkv3 ([3d626d1](https://github.com/farmdawgnation/metashot/commit/3d626d11613f673b32dd8de4c1691d5ff952bbaf))
+
+
+### Bug Fixes
+
+* correct selector for different viz types ([70df513](https://github.com/farmdawgnation/metashot/commit/70df5133a2a5c060c93fcd3877a9da9f8ac7bdd3))
+* **dependabot:** githubs own model bullshit me ([78215f4](https://github.com/farmdawgnation/metashot/commit/78215f404f9150764a30bd8f52437806cd79773d))
+
 ## [1.3.0](https://github.com/farmdawgnation/metashot/compare/metashot-v1.2.2...metashot-v1.3.0) (2025-07-12)
 
 
