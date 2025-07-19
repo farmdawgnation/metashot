@@ -1,6 +1,6 @@
 {
   "name": "metashot",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Generate PNG images from Metabase embed URLs and upload to S3-compatible storage",
   "main": "dist/index.js",
   "scripts": {
