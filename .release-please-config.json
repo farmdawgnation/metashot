@@ -1,19 +1,15 @@
 {
   "release-type": "node",
-  "packages": {
-    ".": {
-      "extra-files": [
-        {
-          "type": "yaml",
-          "path": "helm/metashot/Chart.yaml",
-          "jsonpath": "$.version"
-        },
-        {
-          "type": "yaml", 
-          "path": "helm/metashot/Chart.yaml",
-          "jsonpath": "$.appVersion"
-        }
-      ]
+  "extra-files": [
+    {
+      "type": "yaml",
+      "path": "helm/metashot/Chart.yaml",
+      "jsonpath": "$.version"
+    },
+    {
+      "type": "yaml", 
+      "path": "helm/metashot/Chart.yaml",
+      "jsonpath": "$.appVersion"
     }
-  }
+  ]
 }
