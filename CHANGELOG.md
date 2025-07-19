@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.1](https://github.com/farmdawgnation/metashot/compare/v1.5.0...v1.5.1) (2025-07-19)
+
+
+### Bug Fixes
+
+* skip logging for metrics and health checks ([13418a1](https://github.com/farmdawgnation/metashot/commit/13418a13ef0a4d2d265dd047e0b13f3c43123f57))
+
 ## [1.5.0](https://github.com/farmdawgnation/metashot/compare/v1.4.0...v1.5.0) (2025-07-19)
 
 
