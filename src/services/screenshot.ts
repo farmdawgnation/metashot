@@ -9,6 +9,7 @@ import {
   metricsUtils,
 } from '../metrics';
 import { tracingUtils } from '../tracing';
+import { logger } from '../logger';
 
 export class ScreenshotService {
   private browser: Browser | null = null;
@@ -103,9 +104,39 @@ export class ScreenshotService {
                         waitUntil: 'networkidle',
                       });
 
+                      // 1. Wait for embed frame (shorter timeout)
                       await page.waitForSelector('div[data-testid=embed-frame]', {
-                        timeout: 30000,
+                        timeout: 15000,
                       });
+
+                      // 2. Wait for loading spinner to disappear (most reliable indicator)
+                      await page.waitForSelector('.LoadingSpinner', { 
+                        state: 'hidden', 
+                        timeout: 30000 
+                      }).catch((error) => {
+                        logger.warn({
+                          type: 'screenshot_wait_warning',
+                          selector: '.LoadingSpinner',
+                          state: 'hidden',
+                          timeout: 30000,
+                          error: error.message,
+                        }, 'LoadingSpinner not found or timeout - continuing without spinner wait');
+                      });
+
+                      // 3. Wait for visualization content (shorter timeout)
+                      await page.waitForSelector('svg, canvas, .visualization, .DashCard', {
+                        timeout: 15000
+                      }).catch((error) => {
+                        logger.warn({
+                          type: 'screenshot_wait_warning',
+                          selector: 'svg, canvas, .visualization, .DashCard',
+                          timeout: 15000,
+                          error: error.message,
+                        }, 'Visualization elements not found or timeout - continuing without content wait');
+                      });
+
+                      // 4. Brief pause for final rendering
+                      await page.waitForTimeout(1000);
                     }
                   );
                 },
