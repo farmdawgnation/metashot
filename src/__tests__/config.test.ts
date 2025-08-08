@@ -12,4 +12,10 @@ describe('Config', () => {
     expect(Config.s3.region).toBe('us-east-1');
     expect(Config.presignedUrlExpiry).toBe(3600);
   });
+
+  it('should default tracing to disabled in test', () => {
+    // In test env, enabled should be false regardless of env unless explicitly overridden
+    expect(Config.tracing.enabled).toBe(false);
+    expect(typeof Config.tracing.otlpTracesEndpoint).toBe('string');
+  });
 });

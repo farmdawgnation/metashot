@@ -9,13 +9,17 @@ import packageJson from '../package.json';
 
 // Initialize OpenTelemetry
 export function initializeTracing() {
-  // Prefer OTEL standard env vars; default to local collector (OTLP HTTP)
-  const otlpTracesEndpoint =
-    process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT ||
-    (process.env.OTEL_EXPORTER_OTLP_ENDPOINT
-      ? `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT.replace(/\/?$/, '')}/v1/traces`
-      : 'http://localhost:4318/v1/traces');
+  // If tracing is disabled, return a no-op early
+  if (!Config.tracing.enabled) {
+    // In test or when disabled, do not initialize SDK
+    return {
+      start: async () => {},
+      shutdown: async () => {},
+    } as unknown as NodeSDK;
+  }
 
+  // Read endpoint from configuration
+  const otlpTracesEndpoint = Config.tracing.otlpTracesEndpoint;
   const otlpExporter = new OTLPTraceExporter({ url: otlpTracesEndpoint });
 
   const sdk = new NodeSDK({
@@ -41,11 +45,9 @@ export function initializeTracing() {
     ],
   });
 
-  // Only initialize tracing if not in test environment
-  if (Config.nodeEnv !== 'test') {
-    sdk.start();
-    console.log('OpenTelemetry tracing initialized successfully');
-  }
+  // Start OpenTelemetry SDK
+  sdk.start();
+  console.log('OpenTelemetry tracing initialized successfully');
 
   return sdk;
 }
