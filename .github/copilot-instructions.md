@@ -15,7 +15,7 @@ Key conventions
 - Authentication: if `AUTH_TOKEN` is set, all `/api/*` routes require `Authorization: Bearer <token>` via `authenticateToken` middleware. Health (`/api/health`) and `/metrics` are public.
 - Errors: return `{ error: string, message: string }` (see `src/types.ts`). Avoid leaking internals; log details with `logger`.
 - Observability is first‑class:
-  - Tracing: wrap operations in `tracingUtils.traceOperation(name, fn, attrs)` (OpenTelemetry → Jaeger). Tracing is disabled in `NODE_ENV=test`.
+  - Tracing: wrap operations in `tracingUtils.traceOperation(name, fn, attrs)` (OpenTelemetry → OTLP/HTTP). Configure with `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` or `OTEL_EXPORTER_OTLP_ENDPOINT`; defaults to `http://localhost:4318/v1/traces`. Tracing is disabled in `NODE_ENV=test`.
   - Metrics: define counters/histograms/gauges in `src/metrics.ts` and time work with `metricsUtils.trackDuration`. The `/metrics` endpoint serves Prometheus metrics.
   - Logging: use `logger` (Pino). Dev pretty‑prints; production emits JSON. Request logs skip `/metrics` and health.
 

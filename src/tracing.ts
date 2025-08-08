@@ -1,6 +1,6 @@
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
-import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { trace, SpanStatusCode } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
 import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions';
@@ -9,16 +9,21 @@ import packageJson from '../package.json';
 
 // Initialize OpenTelemetry
 export function initializeTracing() {
-  const jaegerExporter = new JaegerExporter({
-    endpoint: process.env.JAEGER_ENDPOINT || 'http://localhost:14268/api/traces',
-  });
+  // Prefer OTEL standard env vars; default to local collector (OTLP HTTP)
+  const otlpTracesEndpoint =
+    process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT ||
+    (process.env.OTEL_EXPORTER_OTLP_ENDPOINT
+      ? `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT.replace(/\/?$/, '')}/v1/traces`
+      : 'http://localhost:4318/v1/traces');
+
+  const otlpExporter = new OTLPTraceExporter({ url: otlpTracesEndpoint });
 
   const sdk = new NodeSDK({
     resource: new Resource({
       [ATTR_SERVICE_NAME]: packageJson.name,
       [ATTR_SERVICE_VERSION]: packageJson.version,
     }),
-    traceExporter: jaegerExporter,
+    traceExporter: otlpExporter,
     instrumentations: [
       getNodeAutoInstrumentations({
         // Disable file system instrumentation to reduce noise
