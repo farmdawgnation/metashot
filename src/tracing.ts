@@ -1,6 +1,6 @@
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
-import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { trace, SpanStatusCode } from '@opentelemetry/api';
 import { Resource } from '@opentelemetry/resources';
 import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions';
@@ -9,16 +9,25 @@ import packageJson from '../package.json';
 
 // Initialize OpenTelemetry
 export function initializeTracing() {
-  const jaegerExporter = new JaegerExporter({
-    endpoint: process.env.JAEGER_ENDPOINT || 'http://localhost:14268/api/traces',
-  });
+  // If tracing is disabled, return a no-op early
+  if (!Config.tracing.enabled) {
+    // In test or when disabled, do not initialize SDK
+    return {
+      start: async () => {},
+      shutdown: async () => {},
+    } as unknown as NodeSDK;
+  }
+
+  // Read endpoint from configuration
+  const otlpTracesEndpoint = Config.tracing.otlpTracesEndpoint;
+  const otlpExporter = new OTLPTraceExporter({ url: otlpTracesEndpoint });
 
   const sdk = new NodeSDK({
     resource: new Resource({
       [ATTR_SERVICE_NAME]: packageJson.name,
       [ATTR_SERVICE_VERSION]: packageJson.version,
     }),
-    traceExporter: jaegerExporter,
+    traceExporter: otlpExporter,
     instrumentations: [
       getNodeAutoInstrumentations({
         // Disable file system instrumentation to reduce noise
@@ -36,11 +45,9 @@ export function initializeTracing() {
     ],
   });
 
-  // Only initialize tracing if not in test environment
-  if (Config.nodeEnv !== 'test') {
-    sdk.start();
-    console.log('OpenTelemetry tracing initialized successfully');
-  }
+  // Start OpenTelemetry SDK
+  sdk.start();
+  console.log('OpenTelemetry tracing initialized successfully');
 
   return sdk;
 }
