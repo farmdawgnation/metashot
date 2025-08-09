@@ -69,7 +69,7 @@ export function authenticateToken(req: Request, res: Response<ErrorResponse>, ne
       authAttempts.inc({ status: 'failure_invalid_format' });
       res.status(401).json({
         error: 'Unauthorized',
-        message: 'Bearer token is required',
+        message: 'Invalid authorization format',
       });
       return;
     }
@@ -79,6 +79,6 @@ export function authenticateToken(req: Request, res: Response<ErrorResponse>, ne
   authAttempts.inc({ status: 'failure_invalid_format' });
   res.status(401).json({
     error: 'Unauthorized',
-    message: 'Bearer token is required',
+    message: 'Bearer or Basic authorization is required',
   });
 }
