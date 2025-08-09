@@ -56,7 +56,7 @@ describe('authenticateToken middleware', () => {
       expect(res.status).toHaveBeenCalledWith(401);
       expect(res.json).toHaveBeenCalledWith({
         error: 'Unauthorized',
-        message: 'Bearer token is required',
+  message: 'Bearer or Basic authorization is required',
       });
       expect(next).not.toHaveBeenCalled();
     });
@@ -67,7 +67,7 @@ describe('authenticateToken middleware', () => {
       expect(res.status).toHaveBeenCalledWith(401);
       expect(res.json).toHaveBeenCalledWith({
         error: 'Unauthorized',
-        message: 'Bearer token is required',
+  message: 'Bearer or Basic authorization is required',
       });
       expect(next).not.toHaveBeenCalled();
     });
