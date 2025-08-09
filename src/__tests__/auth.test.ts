@@ -101,5 +101,26 @@ describe('authenticateToken middleware', () => {
       expect(res.status).not.toHaveBeenCalled();
       expect(res.json).not.toHaveBeenCalled();
     });
+
+    it('should allow requests with valid Basic auth when password matches token', () => {
+      const creds = Buffer.from(`ignored:test-token-123`).toString('base64');
+      req.headers = { authorization: `Basic ${creds}` } as any;
+      authenticateToken(req as Request, res as Response, next);
+      expect(next).toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
+    });
+
+    it('should reject Basic auth when password does not match token', () => {
+      const creds = Buffer.from(`ignored:wrong-password`).toString('base64');
+      req.headers = { authorization: `Basic ${creds}` } as any;
+      authenticateToken(req as Request, res as Response, next);
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.json).toHaveBeenCalledWith({
+        error: 'Unauthorized',
+        message: 'Invalid token',
+      });
+      expect(next).not.toHaveBeenCalled();
+    });
   });
 });
