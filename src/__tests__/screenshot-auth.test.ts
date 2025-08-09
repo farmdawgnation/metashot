@@ -65,7 +65,7 @@ describe('Screenshot API with Authentication', () => {
       expect(response.status).toBe(401);
       expect(response.body).toEqual({
         error: 'Unauthorized',
-        message: 'Bearer token is required',
+  message: 'Bearer or Basic authorization is required',
       });
     });
 

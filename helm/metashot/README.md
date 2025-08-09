@@ -108,6 +108,15 @@ Once deployed, Metashot provides endpoints for generating screenshots:
 - `POST /api/screenshot` - Generate screenshot from Metabase embed URL
 - `GET /api/screenshot/:id` - Retrieve generated screenshot
 
+### Authentication
+
+If `AUTH_TOKEN` is set via environment or `envFrom`, API requests must include one of:
+
+- `Authorization: Bearer <AUTH_TOKEN>`
+- `Authorization: Basic <base64(any-username:AUTH_TOKEN)>` (only the password is validated)
+
+The health (`/api/health`) and metrics (`/metrics`) endpoints are always public.
+
 ## Upgrading
 
 To upgrade the chart:
