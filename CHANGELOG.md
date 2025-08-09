@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.6.0](https://github.com/farmdawgnation/metashot/compare/v1.5.1...v1.6.0) (2025-08-09)
+
+
+### Features
+
+* **auth:** add Basic auth (password=AUTH_TOKEN) ([#43](https://github.com/farmdawgnation/metashot/issues/43)) ([1ae3f64](https://github.com/farmdawgnation/metashot/commit/1ae3f64185e8c2a352776280b10bda98edabdf5f))
+* improve Metabase chart rendering wait conditions ([#40](https://github.com/farmdawgnation/metashot/issues/40)) ([752028f](https://github.com/farmdawgnation/metashot/commit/752028f65d5f8fe26894b07d75d3fecadebf425e))
+
 ## [1.5.1](https://github.com/farmdawgnation/metashot/compare/v1.5.0...v1.5.1) (2025-07-19)
 
 
