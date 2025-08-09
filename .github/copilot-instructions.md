@@ -12,7 +12,7 @@ Developer workflow (local)
 Key conventions
 - Never read `process.env` directly; use `Config` from `src/config.ts`. Example: S3 endpoint/keys, Metabase site URL + secret, `AUTH_TOKEN`, and `PRESIGNED_URL_EXPIRY`.
 - Initialize and reuse long‑lived resources. The server calls `initializeServices()` (creates Playwright browser, ensures S3 bucket) before listening, and `closeServices()` on shutdown. Don’t launch browsers or construct S3 clients per request.
-- Authentication: if `AUTH_TOKEN` is set, all `/api/*` routes require `Authorization: Bearer <token>` via `authenticateToken` middleware. Health (`/api/health`) and `/metrics` are public.
+- Authentication: if `AUTH_TOKEN` is set, all `/api/*` routes require either `Authorization: Bearer <token>` or `Authorization: Basic <base64(any-username:AUTH_TOKEN)>` (only the password is validated) via `authenticateToken` middleware. Health (`/api/health`) and `/metrics` are public.
 - Errors: return `{ error: string, message: string }` (see `src/types.ts`). Avoid leaking internals; log details with `logger`.
 - Observability is first‑class:
   - Tracing: wrap operations in `tracingUtils.traceOperation(name, fn, attrs)` (OpenTelemetry → OTLP/HTTP). Configure with `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` or `OTEL_EXPORTER_OTLP_ENDPOINT`; defaults to `http://localhost:4318/v1/traces`. Tracing is disabled in `NODE_ENV=test`.

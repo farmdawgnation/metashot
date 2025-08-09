@@ -19,7 +19,7 @@ fully realized image given a Metabase question ID.
 - Upload images to S3-compatible storage
 - Return presigned URLs with configurable expiration
 - Configurable viewport dimensions
-- Bearer token authentication support
+- Authentication via Bearer or Basic (password = AUTH_TOKEN)
 - Health check endpoint
 
 ## Quick Start
@@ -62,10 +62,21 @@ Returns API information.
 Generate a screenshot from a Metabase question.
 
 **Authentication:**
-If `AUTH_TOKEN` is configured, requests must include:
-```
-Authorization: Bearer <token>
-```
+If `AUTH_TOKEN` is configured, requests must include either of the following headers:
+
+- Bearer token
+  ```
+  Authorization: Bearer <AUTH_TOKEN>
+  ```
+
+- Basic auth (password only; username is ignored)
+  ```
+  Authorization: Basic <base64(any-username:AUTH_TOKEN)>
+  ```
+
+Notes:
+- Only the password portion of Basic auth is validated and must equal `AUTH_TOKEN`.
+- Health (`/api/health`) and metrics (`/metrics`) are always public.
 
 **Request Body:**
 ```json
@@ -232,7 +243,9 @@ The generated embed URLs include:
 Environment variables:
 - `PORT` - Server port (default: 8080)
 - `NODE_ENV` - Environment (development/production)
-- `AUTH_TOKEN` - Bearer token required for API authentication (optional)
+- `AUTH_TOKEN` - Token required for API authentication (optional). When set, clients may authenticate with either:
+  - `Authorization: Bearer <AUTH_TOKEN>` or
+  - `Authorization: Basic <base64(any:AUTH_TOKEN)>` (only the password is checked)
 - `METABASE_SITE_URL` - Base URL of your Metabase instance (e.g., https://metabase.example.com)
 - `METABASE_SECRET_KEY` - Secret key for generating Metabase embed tokens (found in Metabase Admin > Settings > Embedding)
 - `S3_ENDPOINT` - S3 endpoint URL (optional, defaults to AWS S3; set for MinIO or other S3-compatible services)
