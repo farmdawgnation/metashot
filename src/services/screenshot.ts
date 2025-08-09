@@ -10,6 +10,7 @@ import {
 } from '../metrics';
 import { tracingUtils } from '../tracing';
 import { logger } from '../logger';
+import { Config } from '../config';
 
 export class ScreenshotService {
   private browser: Browser | null = null;
@@ -77,6 +78,12 @@ export class ScreenshotService {
             const page: Page = await this.browser!.newPage();
             
             try {
+              // Use much shorter waits when running tests to avoid long timeouts on synthetic pages
+              const isTestEnv = Config.nodeEnv === 'test';
+              const spinnerHiddenTimeout = isTestEnv ? 500 : 30000;
+              const vizContentTimeout = isTestEnv ? 200 : 15000;
+              const finalRenderDelayMs = isTestEnv ? 50 : 1000;
+
               await tracingUtils.traceOperation(
                 'screenshot.setup_viewport',
                 async () => {
@@ -109,34 +116,37 @@ export class ScreenshotService {
                         timeout: 15000,
                       });
 
-                      // 2. Wait for loading spinner to disappear (most reliable indicator)
-                      await page.waitForSelector('.LoadingSpinner', { 
-                        state: 'hidden', 
-                        timeout: 30000 
-                      }).catch((error) => {
-                        logger.warn({
-                          type: 'screenshot_wait_warning',
-                          selector: '.LoadingSpinner',
+                      // 2. Wait for loading spinner to disappear (only if it exists)
+                      const spinnerHandle = await page.$('.LoadingSpinner');
+                      if (spinnerHandle) {
+                        await page.waitForSelector('.LoadingSpinner', {
                           state: 'hidden',
-                          timeout: 30000,
-                          error: error.message,
-                        }, 'LoadingSpinner not found or timeout - continuing without spinner wait');
-                      });
+                          timeout: spinnerHiddenTimeout,
+                        }).catch((error) => {
+                          logger.warn({
+                            type: 'screenshot_wait_warning',
+                            selector: '.LoadingSpinner',
+                            state: 'hidden',
+                            timeout: spinnerHiddenTimeout,
+                            error: error.message,
+                          }, 'LoadingSpinner wait timeout - continuing');
+                        });
+                      }
 
-                      // 3. Wait for visualization content (shorter timeout)
+                      // 3. Wait briefly for visualization content; don't stall long on synthetic/test pages
                       await page.waitForSelector('svg, canvas, .visualization, .DashCard', {
-                        timeout: 15000
+                        timeout: vizContentTimeout,
                       }).catch((error) => {
                         logger.warn({
                           type: 'screenshot_wait_warning',
                           selector: 'svg, canvas, .visualization, .DashCard',
-                          timeout: 15000,
+                          timeout: vizContentTimeout,
                           error: error.message,
-                        }, 'Visualization elements not found or timeout - continuing without content wait');
+                        }, 'Visualization elements not found in time - continuing');
                       });
 
                       // 4. Brief pause for final rendering
-                      await page.waitForTimeout(1000);
+                      await page.waitForTimeout(finalRenderDelayMs);
                     }
                   );
                 },
