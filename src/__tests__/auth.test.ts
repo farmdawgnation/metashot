@@ -113,7 +113,7 @@ describe("authenticateToken middleware", () => {
 
     it("should allow requests with valid Basic auth when password matches token", () => {
       const creds = Buffer.from(`ignored:test-token-123`).toString("base64");
-      req.headers = { authorization: `Basic ${creds}` } as any;
+      req.headers = { authorization: `Basic ${creds}` };
       authenticateToken(req as Request, res as Response, next);
       expect(next).toHaveBeenCalled();
       expect(res.status).not.toHaveBeenCalled();
@@ -122,7 +122,7 @@ describe("authenticateToken middleware", () => {
 
     it("should reject Basic auth when password does not match token", () => {
       const creds = Buffer.from(`ignored:wrong-password`).toString("base64");
-      req.headers = { authorization: `Basic ${creds}` } as any;
+      req.headers = { authorization: `Basic ${creds}` };
       authenticateToken(req as Request, res as Response, next);
       expect(res.status).toHaveBeenCalledWith(401);
       expect(res.json).toHaveBeenCalledWith({

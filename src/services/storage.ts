@@ -1,5 +1,6 @@
 import {
   S3Client,
+  S3ClientConfig,
   HeadBucketCommand,
   CreateBucketCommand,
   PutObjectCommand,
@@ -15,11 +16,27 @@ import {
 } from "../metrics";
 import { tracingUtils } from "../tracing";
 
+interface ExtendedS3ClientConfig extends S3ClientConfig {
+  endpoint?: string;
+  forcePathStyle?: boolean;
+}
+
+interface AWSError {
+  name?: string;
+  $metadata?: {
+    httpStatusCode?: number;
+  };
+}
+
+function isAWSError(error: unknown): error is AWSError {
+  return typeof error === "object" && error !== null;
+}
+
 export class StorageService {
   private s3: S3Client;
 
   constructor() {
-    const s3Config = {
+    const s3Config: ExtendedS3ClientConfig = {
       credentials: {
         accessKeyId: Config.s3.accessKeyId,
         secretAccessKey: Config.s3.secretAccessKey,
@@ -29,8 +46,8 @@ export class StorageService {
 
     // Only set endpoint and forcePathStyle for non-AWS S3 services (like MinIO)
     if (Config.s3.endpoint) {
-      (s3Config as any).endpoint = Config.s3.endpoint;
-      (s3Config as any).forcePathStyle = true;
+      s3Config.endpoint = Config.s3.endpoint;
+      s3Config.forcePathStyle = true;
     }
 
     this.s3 = new S3Client(s3Config);
@@ -47,8 +64,8 @@ export class StorageService {
           );
         },
       );
-    } catch (error: any) {
-      if (error.$metadata?.httpStatusCode === 404) {
+    } catch (error: unknown) {
+      if (isAWSError(error) && error.$metadata?.httpStatusCode === 404) {
         try {
           await metricsUtils.trackDuration(
             s3OperationDuration,
@@ -59,10 +76,14 @@ export class StorageService {
               );
             },
           );
-        } catch (createError: any) {
+        } catch (createError: unknown) {
+          const errorName =
+            isAWSError(createError) && createError.name
+              ? createError.name
+              : "unknown";
           s3OperationErrors.inc({
             operation: "create_bucket",
-            error_type: createError.name || "unknown",
+            error_type: errorName,
           });
           throw createError;
         }
@@ -98,10 +119,12 @@ export class StorageService {
               await this.s3.send(command);
             },
           );
-        } catch (error: any) {
+        } catch (error: unknown) {
+          const errorName =
+            isAWSError(error) && error.name ? error.name : "unknown";
           s3OperationErrors.inc({
             operation: "upload",
-            error_type: error.name || "unknown",
+            error_type: errorName,
           });
           throw error;
         }
@@ -134,10 +157,12 @@ export class StorageService {
               });
             },
           );
-        } catch (error: any) {
+        } catch (error: unknown) {
+          const errorName =
+            isAWSError(error) && error.name ? error.name : "unknown";
           s3OperationErrors.inc({
             operation: "presigned_url",
-            error_type: error.name || "unknown",
+            error_type: errorName,
           });
           throw error;
         }

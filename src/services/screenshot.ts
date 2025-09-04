@@ -1,4 +1,4 @@
-import { chromium, Browser, Page } from "playwright";
+import { chromium, Browser, Page, LaunchOptions } from "playwright";
 import { ScreenshotRequest } from "../types";
 import {
   browserLifecycle,
@@ -23,7 +23,7 @@ export class ScreenshotService {
           browserLifecycle,
           { operation: "startup" },
           async () => {
-            const launchOptions: any = {
+            const launchOptions: LaunchOptions = {
               headless: true,
               args: ["--no-sandbox", "--disable-setuid-sandbox"],
             };

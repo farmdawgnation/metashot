@@ -59,9 +59,13 @@ router.post(
                   params: request.params,
                 }),
             );
-          } catch (metabaseError: any) {
+          } catch (metabaseError: unknown) {
+            const errorMessage =
+              metabaseError instanceof Error
+                ? metabaseError.message
+                : String(metabaseError);
             metabaseUrlErrors.inc({
-              error_type: metabaseError.message.includes("secret")
+              error_type: errorMessage.includes("secret")
                 ? "missing_secret"
                 : "unknown",
             });
