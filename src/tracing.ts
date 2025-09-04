@@ -1,11 +1,14 @@
-import { NodeSDK } from '@opentelemetry/sdk-node';
-import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
-import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
-import { trace, SpanStatusCode } from '@opentelemetry/api';
-import { Resource } from '@opentelemetry/resources';
-import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions';
-import { Config } from './config';
-import packageJson from '../package.json';
+import { NodeSDK } from "@opentelemetry/sdk-node";
+import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentations-node";
+import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
+import { trace, SpanStatusCode } from "@opentelemetry/api";
+import { Resource } from "@opentelemetry/resources";
+import {
+  ATTR_SERVICE_NAME,
+  ATTR_SERVICE_VERSION,
+} from "@opentelemetry/semantic-conventions";
+import { Config } from "./config";
+import packageJson from "../package.json";
 
 // Initialize OpenTelemetry
 export function initializeTracing() {
@@ -31,14 +34,14 @@ export function initializeTracing() {
     instrumentations: [
       getNodeAutoInstrumentations({
         // Disable file system instrumentation to reduce noise
-        '@opentelemetry/instrumentation-fs': {
+        "@opentelemetry/instrumentation-fs": {
           enabled: false,
         },
         // Enable HTTP instrumentation for Express and AWS SDK
-        '@opentelemetry/instrumentation-http': {
+        "@opentelemetry/instrumentation-http": {
           enabled: true,
         },
-        '@opentelemetry/instrumentation-express': {
+        "@opentelemetry/instrumentation-express": {
           enabled: true,
         },
       }),
@@ -47,7 +50,7 @@ export function initializeTracing() {
 
   // Start OpenTelemetry SDK
   sdk.start();
-  console.log('OpenTelemetry tracing initialized successfully');
+  console.log("OpenTelemetry tracing initialized successfully");
 
   return sdk;
 }
@@ -67,33 +70,37 @@ export const tracingUtils = {
   traceOperation: async <T>(
     operationName: string,
     operation: () => Promise<T>,
-    attributes?: Record<string, any>
+    attributes?: Record<string, any>,
   ): Promise<T> => {
     const tracer = trace.getTracer(packageJson.name, packageJson.version);
-    
-    return tracer.startActiveSpan(operationName, { attributes }, async (span) => {
-      try {
-        const result = await operation();
-        span.setStatus({ code: SpanStatusCode.OK });
-        return result;
-      } catch (error) {
-        span.setStatus({
-          code: SpanStatusCode.ERROR,
-          message: error instanceof Error ? error.message : 'Unknown error',
-        });
-        
-        if (error instanceof Error) {
-          span.setAttributes({
-            'error.name': error.name,
-            'error.message': error.message,
-            'error.stack': error.stack || '',
+
+    return tracer.startActiveSpan(
+      operationName,
+      { attributes },
+      async (span) => {
+        try {
+          const result = await operation();
+          span.setStatus({ code: SpanStatusCode.OK });
+          return result;
+        } catch (error) {
+          span.setStatus({
+            code: SpanStatusCode.ERROR,
+            message: error instanceof Error ? error.message : "Unknown error",
           });
+
+          if (error instanceof Error) {
+            span.setAttributes({
+              "error.name": error.name,
+              "error.message": error.message,
+              "error.stack": error.stack || "",
+            });
+          }
+
+          throw error;
+        } finally {
+          span.end();
         }
-        
-        throw error;
-      } finally {
-        span.end();
-      }
-    });
+      },
+    );
   },
 };

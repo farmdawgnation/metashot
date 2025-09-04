@@ -1,11 +1,11 @@
-import request from 'supertest';
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import screenshotRouter from '../routes/screenshot';
-import { Config } from '../config';
+import request from "supertest";
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import screenshotRouter from "../routes/screenshot";
+import { Config } from "../config";
 
-describe('Screenshot API with Authentication', () => {
+describe("Screenshot API with Authentication", () => {
   let app: express.Application;
   const originalAuthToken = Config.authToken;
 
@@ -14,101 +14,112 @@ describe('Screenshot API with Authentication', () => {
     app.use(helmet());
     app.use(cors());
     app.use(express.json());
-    app.use('/api', screenshotRouter);
+    app.use("/api", screenshotRouter);
   });
 
   afterAll(() => {
-    Object.defineProperty(Config, 'authToken', { value: originalAuthToken, writable: true });
+    Object.defineProperty(Config, "authToken", {
+      value: originalAuthToken,
+      writable: true,
+    });
   });
 
-  describe('when authToken is not configured', () => {
+  describe("when authToken is not configured", () => {
     beforeEach(() => {
-      Object.defineProperty(Config, 'authToken', { value: undefined, writable: true });
+      Object.defineProperty(Config, "authToken", {
+        value: undefined,
+        writable: true,
+      });
     });
 
-    it('should allow requests without authorization header', async () => {
+    it("should allow requests without authorization header", async () => {
       const response = await request(app)
-        .post('/api/screenshot')
+        .post("/api/screenshot")
         .send({ questionId: 1 });
 
       expect(response.status).not.toBe(401);
     });
   });
 
-  describe('when authToken is configured', () => {
+  describe("when authToken is configured", () => {
     beforeEach(() => {
-      Object.defineProperty(Config, 'authToken', { value: 'test-token-123', writable: true });
+      Object.defineProperty(Config, "authToken", {
+        value: "test-token-123",
+        writable: true,
+      });
     });
 
     afterEach(() => {
-      Object.defineProperty(Config, 'authToken', { value: undefined, writable: true });
+      Object.defineProperty(Config, "authToken", {
+        value: undefined,
+        writable: true,
+      });
     });
 
-    it('should reject requests without authorization header', async () => {
+    it("should reject requests without authorization header", async () => {
       const response = await request(app)
-        .post('/api/screenshot')
+        .post("/api/screenshot")
         .send({ questionId: 1 });
 
       expect(response.status).toBe(401);
       expect(response.body).toEqual({
-        error: 'Unauthorized',
-        message: 'Authorization header is required',
+        error: "Unauthorized",
+        message: "Authorization header is required",
       });
     });
 
-    it('should reject requests with invalid authorization header', async () => {
+    it("should reject requests with invalid authorization header", async () => {
       const response = await request(app)
-        .post('/api/screenshot')
-        .set('Authorization', 'Invalid token')
+        .post("/api/screenshot")
+        .set("Authorization", "Invalid token")
         .send({ questionId: 1 });
 
       expect(response.status).toBe(401);
       expect(response.body).toEqual({
-        error: 'Unauthorized',
-  message: 'Bearer or Basic authorization is required',
+        error: "Unauthorized",
+        message: "Bearer or Basic authorization is required",
       });
     });
 
-    it('should reject requests with incorrect token', async () => {
+    it("should reject requests with incorrect token", async () => {
       const response = await request(app)
-        .post('/api/screenshot')
-        .set('Authorization', 'Bearer wrong-token')
+        .post("/api/screenshot")
+        .set("Authorization", "Bearer wrong-token")
         .send({ questionId: 1 });
 
       expect(response.status).toBe(401);
       expect(response.body).toEqual({
-        error: 'Unauthorized',
-        message: 'Invalid token',
+        error: "Unauthorized",
+        message: "Invalid token",
       });
     });
 
-    it('should allow requests with correct token', async () => {
+    it("should allow requests with correct token", async () => {
       const response = await request(app)
-        .post('/api/screenshot')
-        .set('Authorization', 'Bearer test-token-123')
+        .post("/api/screenshot")
+        .set("Authorization", "Bearer test-token-123")
         .send({ questionId: 1 });
 
       expect(response.status).not.toBe(401);
     });
 
-    it('should not require authentication for health endpoint', async () => {
-      const response = await request(app)
-        .get('/api/health');
+    it("should not require authentication for health endpoint", async () => {
+      const response = await request(app).get("/api/health");
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual({
-        status: 'healthy',
+        status: "healthy",
         timestamp: expect.any(String),
       });
     });
 
-    it('should accept requests with parameters', async () => {
+    it("should accept requests with parameters", async () => {
       const response = await request(app)
-        .post('/api/screenshot')
-        .set('Authorization', 'Bearer test-token-123')
-        .send({ 
-          questionId: 1, 
-          params: { userId: 123, region: 'us-west' }
+        .post("/api/screenshot")
+        .set("Authorization", "Bearer test-token-123")
+        .send({
+          questionId: 1,
+          params: { userId: 123, region: "us-west" },
         });
 
       expect(response.status).not.toBe(401);
