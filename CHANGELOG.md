@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/farmdawgnation/metashot/compare/v1.6.0...v1.7.0) (2025-09-05)
+
+
+### Features
+
+* **auth:** add support for token as a query parameter ([31e2088](https://github.com/farmdawgnation/metashot/commit/31e2088674ae717eb29ec7ec2e30aa07252ce49e))
+
 ## [1.6.0](https://github.com/farmdawgnation/metashot/compare/v1.5.1...v1.6.0) (2025-08-09)
 
 
