@@ -10,6 +10,8 @@ describe("authenticateToken middleware", () => {
   beforeEach(() => {
     req = {
       headers: {},
+  // Ensure query object exists for middleware that reads req.query.token
+  query: {},
     };
     res = {
       status: jest.fn().mockReturnThis(),
@@ -123,6 +125,28 @@ describe("authenticateToken middleware", () => {
     it("should reject Basic auth when password does not match token", () => {
       const creds = Buffer.from(`ignored:wrong-password`).toString("base64");
       req.headers = { authorization: `Basic ${creds}` };
+      authenticateToken(req as Request, res as Response, next);
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.json).toHaveBeenCalledWith({
+        error: "Unauthorized",
+        message: "Invalid token",
+      });
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it("should allow requests when query token matches and header is non-Bearer/Basic", () => {
+      req.headers = { authorization: "Something else" };
+      // Provide token via query param to exercise that branch
+      (req as any).query = { token: "test-token-123" };
+      authenticateToken(req as Request, res as Response, next);
+      expect(next).toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
+    });
+
+    it("should reject when query token is invalid and header is non-Bearer/Basic", () => {
+      req.headers = { authorization: "Totally invalid" };
+      (req as any).query = { token: "wrong-token" };
       authenticateToken(req as Request, res as Response, next);
       expect(res.status).toHaveBeenCalledWith(401);
       expect(res.json).toHaveBeenCalledWith({
