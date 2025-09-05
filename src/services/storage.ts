@@ -88,9 +88,11 @@ export class StorageService {
           throw createError;
         }
       } else {
+        const errorName =
+          isAWSError(error) && error.name ? error.name : "unknown";
         s3OperationErrors.inc({
           operation: "bucket_exists",
-          error_type: error.name || "unknown",
+          error_type: errorName,
         });
         throw error;
       }
