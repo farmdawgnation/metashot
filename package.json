@@ -30,7 +30,7 @@
     "@opentelemetry/auto-instrumentations-node": "^0.52.1",
     "@opentelemetry/exporter-trace-otlp-http": "^0.56.0",
     "@opentelemetry/resources": "^1.29.0",
-    "@opentelemetry/semantic-conventions": "^1.29.0"
+    "@opentelemetry/semantic-conventions": "^1.37.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
