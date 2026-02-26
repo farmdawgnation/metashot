@@ -2,7 +2,7 @@ import { NodeSDK } from "@opentelemetry/sdk-node";
 import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentations-node";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { trace, SpanStatusCode } from "@opentelemetry/api";
-import { Resource } from "@opentelemetry/resources";
+import { resourceFromAttributes } from "@opentelemetry/resources";
 import {
   ATTR_SERVICE_NAME,
   ATTR_SERVICE_VERSION,
@@ -26,7 +26,7 @@ export function initializeTracing() {
   const otlpExporter = new OTLPTraceExporter({ url: otlpTracesEndpoint });
 
   const sdk = new NodeSDK({
-    resource: new Resource({
+    resource: resourceFromAttributes({
       [ATTR_SERVICE_NAME]: packageJson.name,
       [ATTR_SERVICE_VERSION]: packageJson.version,
     }),
