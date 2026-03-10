@@ -70,7 +70,7 @@ export function authenticateToken(
         message: "Invalid token",
       });
       return;
-    } catch (_e) {
+    } catch (/* eslint-disable-line @typescript-eslint/no-unused-vars */ _unusedError: unknown) {
       authAttempts.inc({ status: "failure_invalid_format" });
       res.status(401).json({
         error: "Unauthorized",
