@@ -10,8 +10,7 @@ describe("authenticateToken middleware", () => {
   beforeEach(() => {
     req = {
       headers: {},
-  // Ensure query object exists for middleware that reads req.query.token
-  query: {},
+      query: {},
     };
     res = {
       status: jest.fn().mockReturnThis(),
