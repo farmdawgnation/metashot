@@ -5,6 +5,7 @@ import { ScreenshotRequest, ScreenshotResponse, ErrorResponse } from "../types";
 import { Config } from "../config";
 import { generateMetabaseEmbedUrl } from "../metabase";
 import { authenticateToken } from "../middleware/auth";
+import { screenshotRateLimiter } from "../middleware/rateLimiter";
 import { logger } from "../logger";
 import {
   screenshotRequests,
@@ -30,6 +31,7 @@ export async function closeServices(): Promise<void> {
 
 router.post(
   "/screenshot",
+  screenshotRateLimiter,
   authenticateToken,
   async (req: Request, res: Response<ScreenshotResponse | ErrorResponse>) => {
     concurrentRequests.inc();
