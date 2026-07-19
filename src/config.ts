@@ -12,6 +12,7 @@ const parseBoolean = (value: string | undefined): boolean => {
 export const Config = {
   port: parseInt(process.env.PORT || "8080", 10),
   nodeEnv: process.env.NODE_ENV || "development",
+  trustProxy: parseBoolean(process.env.TRUST_PROXY),
   authToken: process.env.AUTH_TOKEN || undefined,
   tracing: {
     // Disabled by default; enable via TRACING_ENABLED=true and not OTEL_SDK_DISABLED=true
@@ -38,4 +39,8 @@ export const Config = {
     region: process.env.S3_REGION || "us-east-1",
   },
   presignedUrlExpiry: parseInt(process.env.PRESIGNED_URL_EXPIRY || "3600", 10),
+  rateLimit: {
+    windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || "60000", 10),
+    max: parseInt(process.env.RATE_LIMIT_MAX || "30", 10),
+  },
 };

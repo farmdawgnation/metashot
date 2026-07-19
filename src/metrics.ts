@@ -85,6 +85,13 @@ export const metabaseUrlErrors = new Counter({
   labelNames: ["error_type"],
 });
 
+// Rate Limiting Metrics
+export const rateLimitHits = new Counter({
+  name: "metashot_rate_limit_hits_total",
+  help: "Total number of rate limit hits",
+  labelNames: ["status"],
+});
+
 // Business Logic Metrics
 export const screenshotRequests = new Counter({
   name: "metashot_screenshot_requests_total",
