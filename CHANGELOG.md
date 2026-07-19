@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0](https://github.com/farmdawgnation/metashot/compare/v1.7.0...v1.8.0) (2026-07-19)
+
+
+### Features
+
+* Add rate limiting to screenshot endpoint ([#66](https://github.com/farmdawgnation/metashot/issues/66)) ([5de98a4](https://github.com/farmdawgnation/metashot/commit/5de98a47776bd3ad6067e193e3ea51cad5eaf8c0))
+
 ## [1.7.0](https://github.com/farmdawgnation/metashot/compare/v1.6.0...v1.7.0) (2025-09-05)
 
 
