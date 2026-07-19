@@ -12,6 +12,7 @@ const parseBoolean = (value: string | undefined): boolean => {
 export const Config = {
   port: parseInt(process.env.PORT || "8080", 10),
   nodeEnv: process.env.NODE_ENV || "development",
+  trustProxy: parseBoolean(process.env.TRUST_PROXY),
   authToken: process.env.AUTH_TOKEN || undefined,
   tracing: {
     // Disabled by default; enable via TRACING_ENABLED=true and not OTEL_SDK_DISABLED=true

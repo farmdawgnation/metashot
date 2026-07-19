@@ -17,6 +17,10 @@ import packageJson from "../package.json";
 
 const app = express();
 
+if (Config.trustProxy) {
+  app.set("trust proxy", true);
+}
+
 // Prometheus metrics middleware (before other middleware)
 const metricsMiddleware = promBundle({
   includeMethod: true,
