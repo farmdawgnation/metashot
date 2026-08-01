@@ -12,6 +12,34 @@ export interface TraceAndTrackOptions {
   errorLabels?: Record<string, string | number>;
 }
 
+type TimerEnd = (labels?: Record<string, string | number>) => number;
+
+// Metrics are best-effort: a labeling mistake (e.g. a label not declared on
+// the histogram) must not fail the operation it's measuring.
+function startTimer(
+  histogram: Histogram<string>,
+  labels?: Record<string, string | number>,
+): TimerEnd | null {
+  try {
+    return histogram.startTimer(labels);
+  } catch (error) {
+    console.error("Failed to start histogram timer:", error);
+    return null;
+  }
+}
+
+function endTimer(
+  end: TimerEnd | null,
+  labels?: Record<string, string | number>,
+): void {
+  if (!end) return;
+  try {
+    end(labels);
+  } catch (error) {
+    console.error("Failed to record histogram duration:", error);
+  }
+}
+
 // Wraps an operation with a trace span and, if a histogram is provided, a
 // duration timer whose labels can be refined based on the operation's outcome.
 export async function traceAndTrack<T>(
@@ -25,13 +53,13 @@ export async function traceAndTrack<T>(
         return operation();
       }
 
-      const end = options.histogram.startTimer(options.labels);
+      const end = startTimer(options.histogram, options.labels);
       try {
         const result = await operation();
-        end(options.successLabels);
+        endTimer(end, options.successLabels);
         return result;
       } catch (error) {
-        end(options.errorLabels);
+        endTimer(end, options.errorLabels);
         throw error;
       }
     },

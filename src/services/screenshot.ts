@@ -29,9 +29,8 @@ export class ScreenshotService {
         };
 
         // Use system Chromium if available (for Docker deployment)
-        if (process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH) {
-          launchOptions.executablePath =
-            process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
+        if (Config.playwright.chromiumExecutablePath) {
+          launchOptions.executablePath = Config.playwright.chromiumExecutablePath;
         }
 
         this.browser = await chromium.launch(launchOptions);
