@@ -7,6 +7,7 @@ import {
   GetObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { randomUUID } from "crypto";
 import { Config } from "../config";
 import {
   s3OperationDuration,
@@ -179,7 +180,6 @@ export class StorageService {
 
   generateFileName(): string {
     const timestamp = Date.now();
-    const random = Math.random().toString(36).substring(2, 15);
-    return `screenshot-${timestamp}-${random}.png`;
+    return `screenshot-${timestamp}-${randomUUID()}.png`;
   }
 }
