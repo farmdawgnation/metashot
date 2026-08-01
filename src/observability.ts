@@ -1,0 +1,40 @@
+import { Histogram } from "prom-client";
+import { tracingUtils } from "./tracing";
+
+export interface TraceAndTrackOptions {
+  // Span/operation name, shared by the trace and (if present) the histogram timer
+  name: string;
+  attributes?: Record<string, any>;
+  histogram?: Histogram<string>;
+  labels?: Record<string, string | number>;
+  // Extra labels merged in on success/error, e.g. a dynamic `status` label
+  successLabels?: Record<string, string | number>;
+  errorLabels?: Record<string, string | number>;
+}
+
+// Wraps an operation with a trace span and, if a histogram is provided, a
+// duration timer whose labels can be refined based on the operation's outcome.
+export async function traceAndTrack<T>(
+  options: TraceAndTrackOptions,
+  operation: () => Promise<T>,
+): Promise<T> {
+  return tracingUtils.traceOperation(
+    options.name,
+    async () => {
+      if (!options.histogram) {
+        return operation();
+      }
+
+      const end = options.histogram.startTimer(options.labels);
+      try {
+        const result = await operation();
+        end(options.successLabels);
+        return result;
+      } catch (error) {
+        end(options.errorLabels);
+        throw error;
+      }
+    },
+    options.attributes,
+  );
+}

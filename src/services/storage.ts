@@ -14,7 +14,7 @@ import {
   uploadSize,
   metricsUtils,
 } from "../metrics";
-import { tracingUtils } from "../tracing";
+import { traceAndTrack } from "../observability";
 
 interface ExtendedS3ClientConfig extends S3ClientConfig {
   endpoint?: string;
@@ -103,24 +103,28 @@ export class StorageService {
     // Record upload size
     uploadSize.observe(buffer.length);
 
-    await tracingUtils.traceOperation(
-      "s3.upload",
+    await traceAndTrack(
+      {
+        name: "s3.upload",
+        histogram: s3OperationDuration,
+        labels: { operation: "upload" },
+        attributes: {
+          "s3.bucket": Config.s3.bucket,
+          "s3.key": fileName,
+          "s3.contentType": "image/png",
+          "s3.size": buffer.length,
+        },
+      },
       async () => {
         try {
-          await metricsUtils.trackDuration(
-            s3OperationDuration,
-            { operation: "upload" },
-            async () => {
-              const command = new PutObjectCommand({
-                Bucket: Config.s3.bucket,
-                Key: fileName,
-                Body: buffer,
-                ContentType: "image/png",
-              });
+          const command = new PutObjectCommand({
+            Bucket: Config.s3.bucket,
+            Key: fileName,
+            Body: buffer,
+            ContentType: "image/png",
+          });
 
-              await this.s3.send(command);
-            },
-          );
+          await this.s3.send(command);
         } catch (error: unknown) {
           const errorName =
             isAWSError(error) && error.name ? error.name : "unknown";
@@ -131,34 +135,31 @@ export class StorageService {
           throw error;
         }
       },
-      {
-        "s3.bucket": Config.s3.bucket,
-        "s3.key": fileName,
-        "s3.contentType": "image/png",
-        "s3.size": buffer.length,
-      },
     );
   }
 
   async generatePresignedUrl(fileName: string): Promise<string> {
-    return await tracingUtils.traceOperation(
-      "s3.presigned_url",
+    return await traceAndTrack(
+      {
+        name: "s3.presigned_url",
+        histogram: s3OperationDuration,
+        labels: { operation: "presigned_url" },
+        attributes: {
+          "s3.bucket": Config.s3.bucket,
+          "s3.key": fileName,
+          "s3.expiresIn": Config.presignedUrlExpiry,
+        },
+      },
       async () => {
         try {
-          return await metricsUtils.trackDuration(
-            s3OperationDuration,
-            { operation: "presigned_url" },
-            async () => {
-              const command = new GetObjectCommand({
-                Bucket: Config.s3.bucket,
-                Key: fileName,
-              });
+          const command = new GetObjectCommand({
+            Bucket: Config.s3.bucket,
+            Key: fileName,
+          });
 
-              return await getSignedUrl(this.s3, command, {
-                expiresIn: Config.presignedUrlExpiry,
-              });
-            },
-          );
+          return await getSignedUrl(this.s3, command, {
+            expiresIn: Config.presignedUrlExpiry,
+          });
         } catch (error: unknown) {
           const errorName =
             isAWSError(error) && error.name ? error.name : "unknown";
@@ -168,11 +169,6 @@ export class StorageService {
           });
           throw error;
         }
-      },
-      {
-        "s3.bucket": Config.s3.bucket,
-        "s3.key": fileName,
-        "s3.expiresIn": Config.presignedUrlExpiry,
       },
     );
   }
