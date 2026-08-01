@@ -8,6 +8,12 @@ export const createRequestLoggingMiddleware = (
   requestLogger: RequestLogger,
 ) => {
   return (req: Request, res: Response, next: NextFunction): void => {
+    // Skip noisy endpoints; req.path excludes the query string.
+    if (req.path === "/metrics" || req.path.startsWith("/api/health")) {
+      next();
+      return;
+    }
+
     const startTime = Date.now();
 
     onFinished(res, () => {

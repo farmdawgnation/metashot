@@ -52,6 +52,56 @@ describe("request logging middleware", () => {
     expect(logRequest.mock.calls[0][1]).toBe("/stream");
   });
 
+  it("does not log requests to /metrics, even with a query string", async () => {
+    let markLogged: () => void = () => undefined;
+    const logged = new Promise<void>((resolve) => {
+      markLogged = resolve;
+    });
+    const logRequest = jest.fn<void, [string, string, number, number]>(() =>
+      markLogged(),
+    );
+    const app = express();
+    app.use(createRequestLoggingMiddleware({ logRequest }));
+    app.get("/metrics", (_req, res) => {
+      res.end("metrics");
+    });
+    app.get("/log-me", (_req, res) => {
+      res.json({ ok: true });
+    });
+
+    await request(app).get("/metrics?foo=bar").expect(200);
+    await request(app).get("/log-me").expect(200);
+    await logged;
+
+    expect(logRequest).toHaveBeenCalledTimes(1);
+    expect(logRequest.mock.calls[0][1]).toBe("/log-me");
+  });
+
+  it("does not log requests to /api/health, even with a query string", async () => {
+    let markLogged: () => void = () => undefined;
+    const logged = new Promise<void>((resolve) => {
+      markLogged = resolve;
+    });
+    const logRequest = jest.fn<void, [string, string, number, number]>(() =>
+      markLogged(),
+    );
+    const app = express();
+    app.use(createRequestLoggingMiddleware({ logRequest }));
+    app.get("/api/health", (_req, res) => {
+      res.json({ status: "ok" });
+    });
+    app.get("/log-me", (_req, res) => {
+      res.json({ ok: true });
+    });
+
+    await request(app).get("/api/health?foo=bar").expect(200);
+    await request(app).get("/log-me").expect(200);
+    await logged;
+
+    expect(logRequest).toHaveBeenCalledTimes(1);
+    expect(logRequest.mock.calls[0][1]).toBe("/log-me");
+  });
+
   it("does not modify res.send", async () => {
     const app = express();
     app.use(createRequestLoggingMiddleware({ logRequest: jest.fn() }));
