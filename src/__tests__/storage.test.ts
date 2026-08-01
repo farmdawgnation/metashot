@@ -51,8 +51,12 @@ describe("StorageService", () => {
       const fileName1 = storageService.generateFileName();
       const fileName2 = storageService.generateFileName();
 
-      expect(fileName1).toMatch(/^screenshot-\d+-[a-z0-9]+\.png$/);
-      expect(fileName2).toMatch(/^screenshot-\d+-[a-z0-9]+\.png$/);
+      expect(fileName1).toMatch(
+        /^screenshot-\d+-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.png$/,
+      );
+      expect(fileName2).toMatch(
+        /^screenshot-\d+-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.png$/,
+      );
       expect(fileName1).not.toBe(fileName2);
     });
   });
