@@ -7,6 +7,7 @@ import { generateMetabaseEmbedUrl } from "../metabase";
 import { authenticateToken } from "../middleware/auth";
 import { screenshotRateLimiter } from "../middleware/rateLimiter";
 import { logger } from "../logger";
+import { sanitizeError } from "../utils/sanitize";
 import {
   screenshotRequests,
   concurrentRequests,
@@ -103,7 +104,7 @@ router.post(
     } catch (error) {
       screenshotRequests.inc({ status: "error" });
       logger.error(
-        { error, questionId: req.body.questionId },
+        { error: sanitizeError(error), questionId: req.body?.questionId },
         "Screenshot error",
       );
       res.status(500).json({

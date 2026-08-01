@@ -11,6 +11,7 @@ import {
 import { tracingUtils } from "../tracing";
 import { logger } from "../logger";
 import { Config } from "../config";
+import { redactSensitiveInfo } from "../utils/sanitize";
 
 export class ScreenshotService {
   private browser: Browser | null = null;
@@ -138,7 +139,7 @@ export class ScreenshotService {
                                 selector: ".LoadingSpinner",
                                 state: "hidden",
                                 timeout: spinnerHiddenTimeout,
-                                error: error.message,
+                                error: redactSensitiveInfo(error.message),
                               },
                               "LoadingSpinner wait timeout - continuing",
                             );
@@ -160,7 +161,7 @@ export class ScreenshotService {
                               selector:
                                 "svg, canvas, .visualization, .DashCard",
                               timeout: vizContentTimeout,
-                              error: error.message,
+                              error: redactSensitiveInfo(error.message),
                             },
                             "Visualization elements not found in time - continuing",
                           );
@@ -172,7 +173,7 @@ export class ScreenshotService {
                   );
                 },
                 {
-                  "page.url": embedUrl,
+                  "request.questionId": request.questionId,
                   "page.selector": "div[data-testid=embed-frame]",
                 },
               );

@@ -9,6 +9,7 @@ import {
 } from "@opentelemetry/semantic-conventions";
 import { Config } from "./config";
 import packageJson from "../package.json";
+import { redactSensitiveInfo } from "./utils/sanitize";
 
 // Initialize OpenTelemetry
 export function initializeTracing() {
@@ -83,16 +84,21 @@ export const tracingUtils = {
           span.setStatus({ code: SpanStatusCode.OK });
           return result;
         } catch (error) {
+          const sanitizedMessage =
+            error instanceof Error
+              ? redactSensitiveInfo(error.message)
+              : redactSensitiveInfo(String(error));
+
           span.setStatus({
             code: SpanStatusCode.ERROR,
-            message: error instanceof Error ? error.message : "Unknown error",
+            message: sanitizedMessage,
           });
 
           if (error instanceof Error) {
             span.setAttributes({
               "error.name": error.name,
-              "error.message": error.message,
-              "error.stack": error.stack || "",
+              "error.message": sanitizedMessage,
+              "error.stack": redactSensitiveInfo(error.stack || ""),
             });
           }
 

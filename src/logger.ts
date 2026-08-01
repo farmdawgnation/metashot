@@ -1,9 +1,14 @@
 import pino from "pino";
 import { Config } from "./config";
+import { sanitizeError } from "./utils/sanitize";
 
 // Create logger configuration based on environment
 const pinoConfig = {
   level: Config.nodeEnv === "test" ? "silent" : "info",
+  serializers: {
+    err: sanitizeError,
+    error: sanitizeError,
+  },
   ...(Config.nodeEnv === "production"
     ? {
         // Production: JSON format for structured logging
