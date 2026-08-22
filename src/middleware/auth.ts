@@ -14,7 +14,6 @@ export function authenticateToken(
   }
 
   const authHeader = req.headers.authorization;
-  const tokenQueryParam = req.query.token;
 
   if (!authHeader) {
     authAttempts.inc({ status: "failure_missing_header" });
@@ -80,22 +79,7 @@ export function authenticateToken(
     }
   }
 
-  if (tokenQueryParam) {
-    if (tokenQueryParam !== Config.authToken) {
-      authAttempts.inc({ status: "failure_invalid_token" });
-      res.status(401).json({
-        error: "Unauthorized",
-        message: "Invalid token",
-      });
-      return;
-    }
-
-    authAttempts.inc({ status: "success" });
-    next();
-    return;
-  }
-
-  // Fallback: enforce existing Bearer-only error to preserve current behavior/tests
+  // Fallback: reject unsupported authorization formats
   authAttempts.inc({ status: "failure_invalid_format" });
   res.status(401).json({
     error: "Unauthorized",
