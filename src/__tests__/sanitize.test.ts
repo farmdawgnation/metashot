@@ -95,5 +95,43 @@ describe("Sanitize Utility", () => {
       );
       expect(sanitized.code).toBe(500);
     });
+
+    it("should preserve the error subclass", () => {
+      const sanitized = sanitizeError(new TypeError("boom"));
+      expect(sanitized).toBeInstanceOf(TypeError);
+      expect(sanitized.constructor.name).toBe("TypeError");
+    });
+
+    it("should handle circular references in plain objects", () => {
+      const errorObj: Record<string, unknown> = {
+        url: "http://localhost:3000/embed/question/secretToken",
+      };
+      errorObj.self = errorObj;
+
+      const sanitized = sanitizeError(errorObj);
+      expect(sanitized.url).toBe(
+        "http://localhost:3000/embed/question/[REDACTED]",
+      );
+      expect(sanitized.self).toBe(sanitized);
+    });
+
+    it("should handle circular references on error properties", () => {
+      const error = new Error(
+        "Failed at http://localhost:3000/embed/question/secretToken",
+      );
+      const details: Record<string, unknown> = { owner: error };
+      details.loop = details;
+      (error as unknown as Record<string, unknown>).details = details;
+
+      const sanitized = sanitizeError(error);
+      expect(sanitized.message).toBe(
+        "Failed at http://localhost:3000/embed/question/[REDACTED]",
+      );
+      const sanitizedDetails = (
+        sanitized as unknown as Record<string, Record<string, unknown>>
+      ).details;
+      expect(sanitizedDetails.owner).toBe(sanitized);
+      expect(sanitizedDetails.loop).toBe(sanitizedDetails);
+    });
   });
 });

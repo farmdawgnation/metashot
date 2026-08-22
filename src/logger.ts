@@ -2,12 +2,21 @@ import pino from "pino";
 import { Config } from "./config";
 import { sanitizeError } from "./utils/sanitize";
 
+// Redacts sensitive tokens, then hands Errors to pino's standard serializer so the
+// message and stack survive JSON serialization (Error's own fields are non-enumerable).
+export const sanitizingErrorSerializer = (value: unknown) => {
+  const sanitized = sanitizeError(value);
+  return sanitized instanceof Error
+    ? pino.stdSerializers.err(sanitized)
+    : sanitized;
+};
+
 // Create logger configuration based on environment
 const pinoConfig = {
   level: Config.nodeEnv === "test" ? "silent" : "info",
   serializers: {
-    err: sanitizeError,
-    error: sanitizeError,
+    err: sanitizingErrorSerializer,
+    error: sanitizingErrorSerializer,
   },
   ...(Config.nodeEnv === "production"
     ? {

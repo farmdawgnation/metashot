@@ -39,52 +39,52 @@ export function redactSensitiveInfo(input: string): string {
  * Sanitizes an error object or value by redacting sensitive tokens and URLs from its message and stack trace.
  */
 export function sanitizeError<T>(error: T): T {
-  if (!error) return error;
+  return sanitizeValue(error, new Map()) as T;
+}
 
-  if (error instanceof Error) {
-    const copy = new Error(redactSensitiveInfo(error.message));
-    copy.name = error.name;
-    if (error.stack) {
-      copy.stack = redactSensitiveInfo(error.stack);
+/**
+ * Recursive worker for sanitizeError. `seen` maps each already-visited source object to its
+ * sanitized copy, so circular references resolve to that copy instead of recursing forever.
+ */
+function sanitizeValue(value: unknown, seen: Map<object, unknown>): unknown {
+  if (!value) return value;
+
+  if (typeof value === "string") {
+    return redactSensitiveInfo(value);
+  }
+
+  if (typeof value !== "object") return value;
+
+  const visited = seen.get(value);
+  if (visited !== undefined) return visited;
+
+  if (value instanceof Error) {
+    // Preserve the prototype so the copy keeps its class (TypeError, etc.)
+    const copy = Object.create(Object.getPrototypeOf(value)) as Error;
+    seen.set(value, copy);
+    copy.message = redactSensitiveInfo(value.message);
+    copy.name = value.name;
+    if (value.stack) {
+      copy.stack = redactSensitiveInfo(value.stack);
     }
     // Copy any additional custom properties on the error object
-    const record = error as unknown as Record<string, unknown>;
-    for (const key of Object.keys(error)) {
-      const val = record[key];
-      if (typeof val === "string") {
-        (copy as unknown as Record<string, unknown>)[key] =
-          redactSensitiveInfo(val);
-      } else if (val && typeof val === "object") {
-        (copy as unknown as Record<string, unknown>)[key] = sanitizeError(val);
-      } else {
-        (copy as unknown as Record<string, unknown>)[key] = val;
-      }
+    const record = value as unknown as Record<string, unknown>;
+    const target = copy as unknown as Record<string, unknown>;
+    for (const key of Object.keys(value)) {
+      target[key] = sanitizeValue(record[key], seen);
     }
-    return copy as unknown as T;
+    return copy;
   }
 
-  if (typeof error === "string") {
-    return redactSensitiveInfo(error) as unknown as T;
-  }
-
-  if (typeof error === "object") {
-    try {
-      const record = error as Record<string, unknown>;
-      const copy = (Array.isArray(error) ? [] : {}) as Record<string, unknown>;
-      for (const [key, val] of Object.entries(record)) {
-        if (typeof val === "string") {
-          copy[key] = redactSensitiveInfo(val);
-        } else if (val && typeof val === "object") {
-          copy[key] = sanitizeError(val);
-        } else {
-          copy[key] = val;
-        }
-      }
-      return copy as unknown as T;
-    } catch {
-      return error;
+  try {
+    const record = value as Record<string, unknown>;
+    const copy = (Array.isArray(value) ? [] : {}) as Record<string, unknown>;
+    seen.set(value, copy);
+    for (const [key, val] of Object.entries(record)) {
+      copy[key] = sanitizeValue(val, seen);
     }
+    return copy;
+  } catch {
+    return value;
   }
-
-  return error;
 }
