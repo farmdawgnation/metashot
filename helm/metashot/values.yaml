@@ -131,6 +131,17 @@ env:
   # -- Expiry time in seconds for presigned URLs
   PRESIGNED_URL_EXPIRY: "3600"
 
+  # Screenshot resource limits (optional; shown with their defaults).
+  # Tune SCREENSHOT_MAX_CONCURRENCY alongside `resources` - each concurrent
+  # screenshot holds a Chromium page open.
+  # SCREENSHOT_MAX_CONCURRENCY: "4"
+  # SCREENSHOT_MAX_QUEUE_DEPTH: "20"
+  # SCREENSHOT_REQUEST_TIMEOUT_MS: "120000"
+  # SCREENSHOT_MIN_DIMENSION: "320"
+  # SCREENSHOT_MAX_DIMENSION: "4096"
+  # RATE_LIMIT_WINDOW_MS: "60000"
+  # RATE_LIMIT_MAX: "30"
+
 # -- Environment variables from external sources (secrets, configmaps, etc.)
 # This allows injecting environment variables from different sources.
 # Use this to provide sensitive values like AUTH_TOKEN, METABASE_SECRET_KEY, S3_SECRET_ACCESS_KEY

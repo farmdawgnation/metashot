@@ -104,6 +104,22 @@ export const concurrentRequests = new Gauge({
   help: "Number of requests currently being processed",
 });
 
+export const screenshotRejections = new Counter({
+  name: "metashot_screenshot_rejections_total",
+  help: "Total number of screenshot requests rejected before completing work",
+  labelNames: ["reason"], // 'invalid_request', 'queue_full', 'timeout'
+});
+
+export const screenshotActiveJobs = new Gauge({
+  name: "metashot_screenshot_active_jobs",
+  help: "Number of screenshot jobs holding a concurrency slot",
+});
+
+export const screenshotQueueDepth = new Gauge({
+  name: "metashot_screenshot_queue_depth",
+  help: "Number of screenshot requests waiting for a concurrency slot",
+});
+
 // Utility functions for common metric operations
 export const metricsUtils = {
   // Track operation duration with automatic labeling
