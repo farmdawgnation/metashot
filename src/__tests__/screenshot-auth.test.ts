@@ -61,6 +61,13 @@ describe("Screenshot API with Authentication", () => {
       });
     });
 
+    afterEach(() => {
+      Object.defineProperty(Config, "allowUnauthenticated", {
+        value: false,
+        writable: true,
+      });
+    });
+
     it("should allow requests without authorization header", async () => {
       const response = await request(app)
         .post("/api/screenshot")
