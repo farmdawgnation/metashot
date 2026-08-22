@@ -11,7 +11,8 @@ import screenshotRouter, {
   closeServices,
 } from "./routes/screenshot";
 import { Config } from "./config";
-import { logger, createRequestLogger } from "./logger";
+import { logger } from "./logger";
+import { requestLoggingMiddleware } from "./middleware/requestLogging";
 import { register } from "./metrics";
 import packageJson from "../package.json";
 
@@ -33,27 +34,7 @@ const metricsMiddleware = promBundle({
 app.use(metricsMiddleware);
 
 // Request logging middleware
-const requestLogger = createRequestLogger();
-app.use((req, res, next) => {
-  const startTime = Date.now();
-  const originalSend = res.send;
-
-  res.send = function (body) {
-    const endTime = Date.now();
-    const responseTime = endTime - startTime;
-
-    requestLogger.logRequest(
-      req.method,
-      req.originalUrl,
-      res.statusCode,
-      responseTime,
-    );
-
-    return originalSend.call(this, body);
-  };
-
-  next();
-});
+app.use(requestLoggingMiddleware);
 
 app.use(helmet());
 app.use(cors());
