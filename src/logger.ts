@@ -35,10 +35,6 @@ export const createRequestLogger = () => {
       statusCode: number,
       responseTime: number,
     ) => {
-      if (url == "/metrics" || url.startsWith("/api/health")) {
-        // Skip logging for metrics and health checks
-        return;
-      }
       logger.info(
         {
           type: "http_request",
