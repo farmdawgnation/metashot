@@ -1,4 +1,5 @@
 import { chromium, Browser, Page, LaunchOptions } from "playwright";
+import { URL } from "node:url";
 import { ScreenshotRequest } from "../types";
 import {
   browserLifecycle,
@@ -6,6 +7,7 @@ import {
   screenshotDuration,
   screenshotErrors,
   pageLoadDuration,
+  screenshotBlockedRequests,
 } from "../metrics";
 import { traceAndTrack } from "../observability";
 import { logger } from "../logger";
@@ -82,6 +84,42 @@ export class ScreenshotService {
         const page: Page = await this.browser!.newPage();
 
         try {
+          // Metabase page content (dashboard cards, markdown, custom viz) is semi-untrusted, so
+          // restrict navigation and subresource requests to the embed URL's own origin. This stops
+          // compromised/malicious content from pivoting the renderer to internal services or
+          // following a cross-origin redirect. data:/blob: URIs never touch the network, so they're
+          // always allowed through.
+          const allowedOrigin = new URL(embedUrl).origin;
+          await page.route("**/*", (route) => {
+            const requestUrl = route.request().url();
+            if (requestUrl.startsWith("data:") || requestUrl.startsWith("blob:")) {
+              return route.continue();
+            }
+
+            let requestOrigin: string;
+            try {
+              requestOrigin = new URL(requestUrl).origin;
+            } catch {
+              screenshotBlockedRequests.inc({ reason: "unparseable_url" });
+              return route.abort();
+            }
+
+            if (requestOrigin === allowedOrigin) {
+              return route.continue();
+            }
+
+            screenshotBlockedRequests.inc({ reason: "cross_origin" });
+            logger.warn(
+              {
+                type: "screenshot_blocked_request",
+                url: redactSensitiveInfo(requestUrl),
+                allowedOrigin,
+              },
+              "Blocked cross-origin navigation/request from screenshot page",
+            );
+            return route.abort();
+          });
+
           // Use much shorter waits when running tests to avoid long timeouts on synthetic pages
           const isTestEnv = Config.nodeEnv === "test";
           const spinnerHiddenTimeout = isTestEnv ? 500 : 30000;

@@ -66,13 +66,28 @@ spec:
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- if .Values.volumeMounts }}
+          {{- if or .Values.tmpVolume.enabled .Values.volumeMounts }}
           volumeMounts:
+            {{- if .Values.tmpVolume.enabled }}
+            - name: tmp
+              mountPath: /tmp
+            {{- end }}
+            {{- if .Values.volumeMounts }}
             {{- toYaml .Values.volumeMounts | nindent 12 }}
+            {{- end }}
           {{- end }}
-      {{- if .Values.volumes }}
+      {{- if or .Values.tmpVolume.enabled .Values.volumes }}
       volumes:
+        {{- if .Values.tmpVolume.enabled }}
+        - name: tmp
+          emptyDir:
+            {{- if .Values.tmpVolume.sizeLimit }}
+            sizeLimit: {{ .Values.tmpVolume.sizeLimit | quote }}
+            {{- end }}
+        {{- end }}
+        {{- if .Values.volumes }}
         {{- toYaml .Values.volumes | nindent 8 }}
+        {{- end }}
       {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:

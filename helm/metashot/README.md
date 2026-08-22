@@ -100,6 +100,85 @@ ingress:
         - metashot.example.com
 ```
 
+### Security Hardening
+
+Metashot renders Metabase content (dashboard cards, markdown, custom
+visualizations) in a headless Chromium browser. That content is only as
+trustworthy as the users of the upstream Metabase instance, so the chart
+defaults are chosen to contain a compromised or malicious render:
+
+- `securityContext.readOnlyRootFilesystem: true` — the container filesystem
+  is read-only. `tmpVolume.enabled` (default `true`) mounts a size-limited
+  `emptyDir` at `/tmp` for Chromium's profile/cache data, which is the only
+  directory it needs to write to.
+- `podSecurityContext.seccompProfile.type: RuntimeDefault` — restricts the
+  container to the container runtime's default allowed syscalls.
+- `securityContext.capabilities.drop: [ALL]`, `allowPrivilegeEscalation:
+  false`, `runAsNonRoot: true` — already enabled by default.
+- The application itself restricts in-browser navigation and subresource
+  requests to the configured `METABASE_SITE_URL` origin, so redirects or
+  injected content can't pivot the renderer to other hosts.
+
+**On `--no-sandbox`:** the container launches Chromium with
+`--no-sandbox`. Chromium's own sandbox needs either the SUID sandbox helper
+(which requires the ability to gain privileges, i.e.
+`allowPrivilegeEscalation: true`) or unprivileged user namespaces (which
+many managed Kubernetes node images/kernels disable and which would require
+loosening the seccomp profile). Both trade away container-level hardening
+that's enforced above for a second, redundant sandbox boundary. Given that
+tradeoff, `--no-sandbox` is combined with the container/pod hardening above
+plus the origin allowlist instead. If your cluster reliably supports
+unprivileged user namespaces and you want Chromium's own sandbox as
+additional defense-in-depth, you can override `podSecurityContext` and
+`securityContext` and drop `--no-sandbox` from the Playwright launch args,
+but this is not the chart default.
+
+**Egress NetworkPolicy:** the chart does not ship a `NetworkPolicy` by
+default since the required egress targets (your Metabase instance, your S3
+endpoint, and optionally an OTLP collector) vary per deployment. Add one via
+[`extraObjects`](#values), for example:
+
+```yaml
+# values.yaml
+extraObjects:
+  - apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      name: metashot-egress
+      # namespace omitted: Helm applies extraObjects into the release namespace
+    spec:
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: metashot
+      policyTypes:
+        - Egress
+      egress:
+        # DNS
+        - to:
+            - namespaceSelector: {}
+          ports:
+            - protocol: UDP
+              port: 53
+        # Metabase
+        - to:
+            - ipBlock:
+                cidr: 203.0.113.10/32 # replace with your Metabase instance's address
+          ports:
+            - protocol: TCP
+              port: 443
+        # S3 / S3-compatible storage
+        - to:
+            - ipBlock:
+                cidr: 203.0.113.20/32 # replace with your S3 endpoint's address
+          ports:
+            - protocol: TCP
+              port: 443
+```
+
+Prefer a `podSelector`/namespace-based rule over `ipBlock` where your CNI
+and Metabase/S3 endpoints support it (e.g. Metabase running in the same
+cluster), since `ipBlock` rules break if the target's address changes.
+
 ## Usage
 
 Once deployed, Metashot provides endpoints for generating screenshots:
@@ -173,7 +252,7 @@ helm uninstall metashot
 | nameOverride | string | `""` | Override the name of the chart |
 | nodeSelector | object | `{}` | Node labels for pod assignment |
 | podAnnotations | object | `{}` | Annotations to add to the pod |
-| podSecurityContext | object | `{"fsGroup":1001}` | Security context for the pod |
+| podSecurityContext | object | `{"fsGroup":1001,"seccompProfile":{"type":"RuntimeDefault"}}` | Security context for the pod |
 | readinessProbe | object | `{"enabled":true,"failureThreshold":3,"httpGet":{"path":"/api/health","port":"http"},"initialDelaySeconds":5,"periodSeconds":5,"timeoutSeconds":3}` | Readiness probe configuration |
 | readinessProbe.enabled | bool | `true` | Enable readiness probe |
 | readinessProbe.failureThreshold | int | `3` | Failure threshold for readiness probe |
@@ -184,13 +263,16 @@ helm uninstall metashot
 | readinessProbe.timeoutSeconds | int | `3` | Timeout seconds for readiness probe |
 | replicaCount | int | `1` | Number of replicas for the Metashot deployment |
 | resources | object | `{"limits":{"cpu":"500m","memory":"512Mi"},"requests":{"cpu":"100m","memory":"128Mi"}}` | Resource limits and requests for the Metashot container |
-| securityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"readOnlyRootFilesystem":false,"runAsNonRoot":true,"runAsUser":1001}` | Security context for the container |
+| securityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"readOnlyRootFilesystem":true,"runAsNonRoot":true,"runAsUser":1001}` | Security context for the container |
 | service.port | int | `80` | Kubernetes service port |
 | service.targetPort | int | `8080` | Target port for the Metashot application |
 | service.type | string | `"ClusterIP"` | Kubernetes service type |
 | serviceAccount.annotations | object | `{}` | Annotations to add to the service account |
 | serviceAccount.create | bool | `true` | Specifies whether a service account should be created |
 | serviceAccount.name | string | `""` | The name of the service account to use. If not set and create is true, a name is generated using the fullname template |
+| tmpVolume | object | `{"enabled":true,"sizeLimit":"512Mi"}` | Mounts a writable emptyDir at /tmp for the Chromium browser's profile/cache data. Required when securityContext.readOnlyRootFilesystem is true (the default), since Playwright/Chromium need a writable temp directory even though the rest of the container filesystem is read-only. |
+| tmpVolume.enabled | bool | `true` | Enable the /tmp emptyDir mount |
+| tmpVolume.sizeLimit | string | `"512Mi"` | Size limit for the /tmp emptyDir volume |
 | tolerations | list | `[]` | Tolerations for pod assignment |
 | volumeMounts | list | `[]` | Additional volume mounts for the container |
 | volumes | list | `[]` | Additional volumes to be mounted |
