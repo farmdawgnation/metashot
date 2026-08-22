@@ -20,7 +20,8 @@ export const Config = {
       parseBoolean(process.env.TRACING_ENABLED) &&
       !parseBoolean(process.env.OTEL_SDK_DISABLED || undefined) &&
       (process.env.NODE_ENV || "development") !== "test",
-    // Prefer OTEL standard env vars; default to local collector (OTLP HTTP)
+    // Prefer OTEL standard env vars; default to local collector (OTLP HTTP).
+    // Note: OTLP endpoints should use TLS (https://) in production environments to secure telemetry transmission.
     otlpTracesEndpoint:
       process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT ||
       (process.env.OTEL_EXPORTER_OTLP_ENDPOINT

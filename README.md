@@ -254,3 +254,10 @@ Environment variables:
 - `S3_BUCKET` - S3 bucket name
 - `S3_REGION` - S3 region
 - `PRESIGNED_URL_EXPIRY` - Presigned URL expiry in seconds (default: 3600, 1 hour)
+- `TRACING_ENABLED` - Enable OpenTelemetry tracing (`true`/`false`, default: `false`)
+- `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` or `OTEL_EXPORTER_OTLP_ENDPOINT` - OTLP collector traces endpoint (default: `http://localhost:4318/v1/traces`).
+
+> **Security Note on Telemetry & Tracing:**
+> - Metashot automatically redacts signed Metabase embed URLs and sensitive JWT tokens from trace span attributes, error messages, and log outputs to prevent credential leakage into telemetry backends.
+> - In production environments, OTLP collector endpoints must use TLS (`https://`) to secure telemetry data in transit.
+

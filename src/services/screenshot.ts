@@ -10,7 +10,7 @@ import {
 import { traceAndTrack } from "../observability";
 import { logger } from "../logger";
 import { Config } from "../config";
-
+import { redactSensitiveInfo } from "../utils/sanitize";
 export class ScreenshotService {
   private browser: Browser | null = null;
 
@@ -112,7 +112,6 @@ export class ScreenshotService {
               successLabels: { status: "success" },
               errorLabels: { status: "error" },
               attributes: {
-                "page.url": embedUrl,
                 "page.selector": "div[data-testid=embed-frame]",
               },
             },
@@ -142,11 +141,12 @@ export class ScreenshotService {
                         selector: ".LoadingSpinner",
                         state: "hidden",
                         timeout: spinnerHiddenTimeout,
-                        error: error.message,
+                        error: redactSensitiveInfo(error.message),
                       },
                       "LoadingSpinner wait timeout - continuing",
                     );
                   });
+
               }
 
               // 3. Wait briefly for visualization content; don't stall long on synthetic/test pages
@@ -160,7 +160,7 @@ export class ScreenshotService {
                       type: "screenshot_wait_warning",
                       selector: "svg, canvas, .visualization, .DashCard",
                       timeout: vizContentTimeout,
-                      error: error.message,
+                      error: redactSensitiveInfo(error.message),
                     },
                     "Visualization elements not found in time - continuing",
                   );
