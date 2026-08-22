@@ -40,6 +40,10 @@ export const Config = {
     region: process.env.S3_REGION || "us-east-1",
   },
   presignedUrlExpiry: parseInt(process.env.PRESIGNED_URL_EXPIRY || "3600", 10),
+  playwright: {
+    chromiumExecutablePath:
+      process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || undefined,
+  },
   rateLimit: {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || "60000", 10),
     max: parseInt(process.env.RATE_LIMIT_MAX || "30", 10),

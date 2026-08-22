@@ -13,9 +13,8 @@ import {
   concurrentRequests,
   metabaseUrlGeneration,
   metabaseUrlErrors,
-  metricsUtils,
 } from "../metrics";
-import { tracingUtils } from "../tracing";
+import { traceAndTrack } from "../observability";
 
 const router = Router();
 const screenshotService = new ScreenshotService();
@@ -49,19 +48,20 @@ router.post(
       }
 
       // Track Metabase URL generation with tracing
-      const embedUrl = await tracingUtils.traceOperation(
-        "metabase.generate_embed_url",
+      const embedUrl = await traceAndTrack(
+        {
+          name: "metabase.generate_embed_url",
+          histogram: metabaseUrlGeneration,
+          successLabels: { status: "success" },
+          errorLabels: { status: "error" },
+          attributes: { "metabase.questionId": request.questionId },
+        },
         async () => {
           try {
-            return await metricsUtils.trackDuration(
-              metabaseUrlGeneration,
-              { status: "success" },
-              async () =>
-                generateMetabaseEmbedUrl({
-                  questionId: request.questionId,
-                  params: request.params,
-                }),
-            );
+            return await generateMetabaseEmbedUrl({
+              questionId: request.questionId,
+              params: request.params,
+            });
           } catch (metabaseError: unknown) {
             const errorMessage =
               metabaseError instanceof Error
@@ -72,14 +72,9 @@ router.post(
                 ? "missing_secret"
                 : "unknown",
             });
-            metabaseUrlGeneration.observe(
-              { status: "error" },
-              Date.now() / 1000,
-            );
             throw metabaseError;
           }
         },
-        { "metabase.questionId": request.questionId },
       );
 
       const screenshot = await screenshotService.takeScreenshot(
