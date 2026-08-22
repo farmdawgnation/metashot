@@ -32,6 +32,8 @@ podAnnotations: {}
 # -- Security context for the pod
 podSecurityContext:
   fsGroup: 1001
+  seccompProfile:
+    type: RuntimeDefault
 
 # -- Security context for the container
 securityContext:
@@ -39,9 +41,19 @@ securityContext:
   capabilities:
     drop:
     - ALL
-  readOnlyRootFilesystem: false
+  readOnlyRootFilesystem: true
   runAsNonRoot: true
   runAsUser: 1001
+
+# -- Mounts a writable emptyDir at /tmp for the Chromium browser's profile/cache data.
+# Required when securityContext.readOnlyRootFilesystem is true (the default), since
+# Playwright/Chromium need a writable temp directory even though the rest of the
+# container filesystem is read-only.
+tmpVolume:
+  # -- Enable the /tmp emptyDir mount
+  enabled: true
+  # -- Size limit for the /tmp emptyDir volume
+  sizeLimit: "512Mi"
 
 service:
   # -- Kubernetes service type

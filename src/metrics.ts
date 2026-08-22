@@ -44,6 +44,12 @@ export const pageLoadDuration = new Histogram({
   buckets: [0.5, 1, 2, 5, 10, 15, 30], // Seconds
 });
 
+export const screenshotBlockedRequests = new Counter({
+  name: "metashot_screenshot_blocked_requests_total",
+  help: "Total number of navigation/subresource requests blocked by the Metabase-origin allowlist",
+  labelNames: ["reason"], // 'cross_origin', 'unparseable_url'
+});
+
 // Storage Service Metrics
 export const s3OperationDuration = new Histogram({
   name: "metashot_s3_operation_duration_seconds",

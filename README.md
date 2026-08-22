@@ -261,3 +261,7 @@ Environment variables:
 > - Metashot automatically redacts signed Metabase embed URLs and sensitive JWT tokens from trace span attributes, error messages, and log outputs to prevent credential leakage into telemetry backends.
 > - In production environments, OTLP collector endpoints must use TLS (`https://`) to secure telemetry data in transit.
 
+> **Security Note on Browser Hardening:**
+> - Metabase page content (dashboard cards, markdown, custom visualizations) is rendered by users of that Metabase instance and is treated as semi-untrusted. The screenshot renderer restricts in-browser navigation and subresource requests to the origin of `METABASE_SITE_URL`; anything that would leave that origin (a redirect, an injected link, a cross-origin fetch) is aborted rather than followed.
+> - The Chromium browser runs with `--no-sandbox` because its own sandbox requires either the SUID sandbox helper (which needs `allowPrivilegeEscalation: true`) or unprivileged user namespaces (not reliably available on every Kubernetes node). Instead, the container is hardened at the pod/container level: non-root user, all capabilities dropped, no privilege escalation, a read-only root filesystem with only `/tmp` writable, and the `RuntimeDefault` seccomp profile. See the [Helm chart's Security Hardening docs](./helm/metashot/README.md#security-hardening) for the full rationale and an example egress `NetworkPolicy`.
+
