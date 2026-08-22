@@ -62,7 +62,7 @@ Returns API information.
 Generate a screenshot from a Metabase question.
 
 **Authentication:**
-If `AUTH_TOKEN` is configured, requests must include either of the following headers:
+`AUTH_TOKEN` is required. Requests must include either of the following headers:
 
 - Bearer token
   ```
@@ -76,6 +76,7 @@ If `AUTH_TOKEN` is configured, requests must include either of the following hea
 
 Notes:
 - Only the password portion of Basic auth is validated and must equal `AUTH_TOKEN`.
+- If `AUTH_TOKEN` is unset, the server **refuses to start** unless `ALLOW_UNAUTHENTICATED=true` is set explicitly. That opt-out disables authentication and makes the API fully public — intended for local development only, never production.
 - Health (`/api/health`) and metrics (`/metrics`) are always public.
 
 **Request Body:**
@@ -243,9 +244,10 @@ The generated embed URLs include:
 Environment variables:
 - `PORT` - Server port (default: 8080)
 - `NODE_ENV` - Environment (development/production)
-- `AUTH_TOKEN` - Token required for API authentication (optional). When set, clients may authenticate with either:
+- `AUTH_TOKEN` - Token required for API authentication. The server refuses to start without it unless `ALLOW_UNAUTHENTICATED=true` (dev-only opt-out). Clients authenticate with either:
   - `Authorization: Bearer <AUTH_TOKEN>` or
   - `Authorization: Basic <base64(any:AUTH_TOKEN)>` (only the password is checked)
+- `ALLOW_UNAUTHENTICATED` - Explicit opt-out allowing the server to run without `AUTH_TOKEN` (`true`/`false`, default: `false`). When set with no token, all `/api/*` routes are public. Never enable in production.
 - `METABASE_SITE_URL` - Base URL of your Metabase instance (e.g., https://metabase.example.com)
 - `METABASE_SECRET_KEY` - Secret key for generating Metabase embed tokens (found in Metabase Admin > Settings > Embedding)
 - `S3_ENDPOINT` - S3 endpoint URL (optional, defaults to AWS S3; set for MinIO or other S3-compatible services)

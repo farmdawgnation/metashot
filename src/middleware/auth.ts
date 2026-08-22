@@ -9,6 +9,15 @@ export function authenticateToken(
   next: NextFunction,
 ): void {
   if (!Config.authToken) {
+    if (!Config.allowUnauthenticated) {
+      authAttempts.inc({ status: "failure_no_token_configured" });
+      res.status(401).json({
+        error: "Unauthorized",
+        message: "Authentication is not configured on this server",
+      });
+      return;
+    }
+
     authAttempts.inc({ status: "bypass_no_token_required" });
     return next();
   }

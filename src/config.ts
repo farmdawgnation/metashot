@@ -14,6 +14,9 @@ export const Config = {
   nodeEnv: process.env.NODE_ENV || "development",
   trustProxy: parseBoolean(process.env.TRUST_PROXY),
   authToken: process.env.AUTH_TOKEN || undefined,
+  // Explicit opt-out for running without authentication. Defaults to false:
+  // deployments without AUTH_TOKEN refuse to start (see src/index.ts).
+  allowUnauthenticated: parseBoolean(process.env.ALLOW_UNAUTHENTICATED),
   tracing: {
     // Disabled by default; enable via TRACING_ENABLED=true and not OTEL_SDK_DISABLED=true
     enabled:

@@ -25,6 +25,40 @@ describe("authenticateToken middleware", () => {
         value: undefined,
         writable: true,
       });
+      Object.defineProperty(Config, "allowUnauthenticated", {
+        value: false,
+        writable: true,
+      });
+    });
+
+    it("should reject requests when authentication is not configured", () => {
+      authenticateToken(req as Request, res as Response, next);
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.json).toHaveBeenCalledWith({
+        error: "Unauthorized",
+        message: "Authentication is not configured on this server",
+      });
+      expect(next).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("when authToken is not configured but ALLOW_UNAUTHENTICATED is true", () => {
+    beforeEach(() => {
+      Object.defineProperty(Config, "authToken", {
+        value: undefined,
+        writable: true,
+      });
+      Object.defineProperty(Config, "allowUnauthenticated", {
+        value: true,
+        writable: true,
+      });
+    });
+
+    afterEach(() => {
+      Object.defineProperty(Config, "allowUnauthenticated", {
+        value: false,
+        writable: true,
+      });
     });
 
     it("should call next() without authentication", () => {

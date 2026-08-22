@@ -5,6 +5,7 @@ describe("Config", () => {
     expect(Config.port).toBe(8080);
     expect(Config.nodeEnv).toBe("test");
     expect(Config.authToken).toBeUndefined();
+    expect(Config.allowUnauthenticated).toBe(false);
     expect(Config.s3.endpoint).toBe(process.env.S3_ENDPOINT);
     expect(Config.s3.accessKeyId).toBe("minioadmin");
     expect(Config.s3.secretAccessKey).toBe("minioadmin");

@@ -68,7 +68,7 @@ export const uploadSize = new Histogram({
 export const authAttempts = new Counter({
   name: "metashot_auth_attempts_total",
   help: "Total number of authentication attempts",
-  labelNames: ["status"], // 'success', 'failure', 'missing_token'
+  labelNames: ["status"], // 'success', 'failure_*', 'bypass_no_token_required'
 });
 
 // Metabase Integration Metrics
