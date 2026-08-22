@@ -109,13 +109,13 @@ export class ScreenshotService {
             }
 
             screenshotBlockedRequests.inc({ reason: "cross_origin" });
-            logger.warn(
+            logger.debug(
               {
                 type: "screenshot_blocked_request",
-                url: redactSensitiveInfo(requestUrl),
+                requestOrigin,
                 allowedOrigin,
               },
-              "Blocked cross-origin navigation/request from screenshot page",
+              "Blocked cross-origin request during screenshot render",
             );
             return route.abort();
           });
