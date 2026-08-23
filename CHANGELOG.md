@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.8.0](https://github.com/farmdawgnation/metashot/compare/v1.7.0...v1.8.0) (2026-08-23)
+
+
+### Features
+
+* Add rate limiting to screenshot endpoint ([#66](https://github.com/farmdawgnation/metashot/issues/66)) ([5de98a4](https://github.com/farmdawgnation/metashot/commit/5de98a47776bd3ad6067e193e3ea51cad5eaf8c0))
+* implement request limits ([#92](https://github.com/farmdawgnation/metashot/issues/92)) ([286c25b](https://github.com/farmdawgnation/metashot/commit/286c25b8753fb79849604c642115f593dfe530b9)), closes [#71](https://github.com/farmdawgnation/metashot/issues/71)
+* require explicit opt-out for unauthenticated use ([#91](https://github.com/farmdawgnation/metashot/issues/91)) ([de4690b](https://github.com/farmdawgnation/metashot/commit/de4690ba3ff0ef96994f33cafc5a5cf04d1da02e)), closes [#68](https://github.com/farmdawgnation/metashot/issues/68)
+
+
+### Bug Fixes
+
+* close request logging leakage ([#90](https://github.com/farmdawgnation/metashot/issues/90)) ([91bc148](https://github.com/farmdawgnation/metashot/commit/91bc1485ddba9aeda14fa5200180455530c4ec03)), closes [#69](https://github.com/farmdawgnation/metashot/issues/69)
+* harden browser rendering ([#89](https://github.com/farmdawgnation/metashot/issues/89)) ([fe6b794](https://github.com/farmdawgnation/metashot/commit/fe6b794679de67966682699257c3659721ae4d14))
+* redact sensitive tokens from logs, traces, and errors ([#88](https://github.com/farmdawgnation/metashot/issues/88)) ([99a745a](https://github.com/farmdawgnation/metashot/commit/99a745a3806b175dbd86b31b1d891fff20c1fa2c))
+* replace Math.random() with crypto.randomUUID() ([#85](https://github.com/farmdawgnation/metashot/issues/85)) ([86662cf](https://github.com/farmdawgnation/metashot/commit/86662cfa03372b33319c6e128bb3a0741828e2ff)), closes [#62](https://github.com/farmdawgnation/metashot/issues/62)
+
 ## [1.7.0](https://github.com/farmdawgnation/metashot/compare/v1.6.0...v1.7.0) (2025-09-05)
 
 
