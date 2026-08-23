@@ -63,6 +63,25 @@ app.get("/metrics", async (_req, res) => {
 
 async function startServer(): Promise<void> {
   try {
+    if (!Config.authToken && !Config.allowUnauthenticated) {
+      logger.error(
+        "AUTH_TOKEN is not set. Refusing to start: the API would otherwise be fully public. " +
+          "Set AUTH_TOKEN, or explicitly opt out with ALLOW_UNAUTHENTICATED=true.",
+      );
+      process.exit(1);
+    }
+
+    if (Config.allowUnauthenticated && !Config.authToken) {
+      logger.warn(
+        "AUTH_TOKEN is not set and ALLOW_UNAUTHENTICATED=true: authentication is DISABLED and the API is publicly accessible. This is intended for non-production use only.",
+      );
+    } else {
+      logger.info(
+        { authEnabled: true },
+        "Authentication enabled: AUTH_TOKEN is set. All /api/* routes require a valid token.",
+      );
+    }
+
     await initializeServices();
 
     const server = app.listen(Config.port, () => {

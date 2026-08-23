@@ -30,6 +30,42 @@ describe("Screenshot API with Authentication", () => {
         value: undefined,
         writable: true,
       });
+      Object.defineProperty(Config, "allowUnauthenticated", {
+        value: false,
+        writable: true,
+      });
+    });
+
+    it("should reject requests when authentication is not configured", async () => {
+      const response = await request(app)
+        .post("/api/screenshot")
+        .send({ questionId: 1 });
+
+      expect(response.status).toBe(401);
+      expect(response.body).toEqual({
+        error: "Unauthorized",
+        message: "Authentication is not configured on this server",
+      });
+    });
+  });
+
+  describe("when authToken is not configured but ALLOW_UNAUTHENTICATED is true", () => {
+    beforeEach(() => {
+      Object.defineProperty(Config, "authToken", {
+        value: undefined,
+        writable: true,
+      });
+      Object.defineProperty(Config, "allowUnauthenticated", {
+        value: true,
+        writable: true,
+      });
+    });
+
+    afterEach(() => {
+      Object.defineProperty(Config, "allowUnauthenticated", {
+        value: false,
+        writable: true,
+      });
     });
 
     it("should allow requests without authorization header", async () => {

@@ -189,10 +189,12 @@ Once deployed, Metashot provides endpoints for generating screenshots:
 
 ### Authentication
 
-If `AUTH_TOKEN` is set via environment or `envFrom`, API requests must include one of:
+`AUTH_TOKEN` must be set via environment or `envFrom`. API requests must include one of:
 
 - `Authorization: Bearer <AUTH_TOKEN>`
 - `Authorization: Basic <base64(any-username:AUTH_TOKEN)>` (only the password is validated)
+
+The server refuses to start without `AUTH_TOKEN` unless `ALLOW_UNAUTHENTICATED=true` is set explicitly (dev-only opt-out; never use in production).
 
 The health (`/api/health`) and metrics (`/metrics`) endpoints are always public.
 
