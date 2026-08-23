@@ -14,6 +14,17 @@ describe("Config", () => {
     expect(Config.presignedUrlExpiry).toBe(3600);
   });
 
+  it("should default the screenshot resource limits", () => {
+    expect(Config.screenshot).toEqual({
+      minDimension: 320,
+      maxDimension: 4096,
+      maxConcurrency: 4,
+      maxQueueDepth: 20,
+      requestTimeoutMs: 120000,
+    });
+    expect(Config.requestBodyLimit).toBe("100kb");
+  });
+
   it("should default tracing to disabled in test", () => {
     // In test env, enabled should be false regardless of env unless explicitly overridden
     expect(Config.tracing.enabled).toBe(false);

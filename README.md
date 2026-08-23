@@ -92,10 +92,17 @@ Notes:
 ```
 
 **Parameters:**
-- `questionId` (required): The ID of the Metabase question to screenshot
-- `width` (optional): Viewport width in pixels (default: 1920)
-- `height` (optional): Viewport height in pixels (default: 1080)
+- `questionId` (required): The ID of the Metabase question to screenshot. Must be a positive integer.
+- `width` (optional): Viewport width in pixels (default: 1920). Clamped to `SCREENSHOT_MIN_DIMENSION`-`SCREENSHOT_MAX_DIMENSION` (default: 320-4096).
+- `height` (optional): Viewport height in pixels (default: 1080). Clamped to the same range as `width`.
 - `params` (optional): Object containing Metabase parameters to pass to the question
+
+**Errors:**
+- `400 BadRequest` - The body is not a JSON object, `questionId` is missing or not a positive integer, or `width`/`height`/`params` have the wrong type
+- `401 Unauthorized` - `AUTH_TOKEN` is configured and the request did not present it
+- `429 TooManyRequests` - The per-IP rate limit was exceeded (see `RATE_LIMIT_*`)
+- `503 ServiceUnavailable` - All rendering slots and the wait queue are full; retry after the `Retry-After` interval
+- `504 GatewayTimeout` - The screenshot took longer than `SCREENSHOT_REQUEST_TIMEOUT_MS`
 
 **Response:**
 ```json
@@ -256,6 +263,15 @@ Environment variables:
 - `S3_BUCKET` - S3 bucket name
 - `S3_REGION` - S3 region
 - `PRESIGNED_URL_EXPIRY` - Presigned URL expiry in seconds (default: 3600, 1 hour)
+- `TRUST_PROXY` - Trust `X-Forwarded-For` when behind a reverse proxy, so rate limiting sees the real client IP (default: `false`)
+- `RATE_LIMIT_WINDOW_MS` - Rate limit window for `/api/screenshot` in milliseconds (default: 60000)
+- `RATE_LIMIT_MAX` - Requests allowed per IP per window (default: 30)
+- `SCREENSHOT_MIN_DIMENSION` - Lower bound for requested viewport dimensions (default: 320)
+- `SCREENSHOT_MAX_DIMENSION` - Upper bound for requested viewport dimensions (default: 4096)
+- `SCREENSHOT_MAX_CONCURRENCY` - Screenshots rendered at the same time (default: 4)
+- `SCREENSHOT_MAX_QUEUE_DEPTH` - Requests allowed to wait for a rendering slot before new ones are rejected with `503` (default: 20)
+- `SCREENSHOT_REQUEST_TIMEOUT_MS` - Overall deadline for a single screenshot request, after which it fails with `504` (default: 120000)
+- `REQUEST_BODY_LIMIT` - Maximum accepted JSON request body size (default: `100kb`)
 - `TRACING_ENABLED` - Enable OpenTelemetry tracing (`true`/`false`, default: `false`)
 - `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` or `OTEL_EXPORTER_OTLP_ENDPOINT` - OTLP collector traces endpoint (default: `http://localhost:4318/v1/traces`).
 
