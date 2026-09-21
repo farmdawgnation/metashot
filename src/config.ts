@@ -9,11 +9,25 @@ const parseBoolean = (value: string | undefined): boolean => {
   return v === "1" || v === "true" || v === "yes" || v === "on";
 };
 
+// Helper to parse an integer env var, falling back to the default when the
+// value is missing, unparseable, or below the minimum the code can work with.
+const parseIntAtLeast = (
+  value: string | undefined,
+  fallback: number,
+  min: number,
+): number => {
+  const parsed = parseInt(value || "", 10);
+  return Number.isInteger(parsed) && parsed >= min ? parsed : fallback;
+};
+
 export const Config = {
   port: parseInt(process.env.PORT || "8080", 10),
   nodeEnv: process.env.NODE_ENV || "development",
   trustProxy: parseBoolean(process.env.TRUST_PROXY),
   authToken: process.env.AUTH_TOKEN || undefined,
+  // Explicit opt-out for running without authentication. Defaults to false:
+  // deployments without AUTH_TOKEN refuse to start (see src/index.ts).
+  allowUnauthenticated: parseBoolean(process.env.ALLOW_UNAUTHENTICATED),
   tracing: {
     // Disabled by default; enable via TRACING_ENABLED=true and not OTEL_SDK_DISABLED=true
     enabled:
@@ -48,4 +62,31 @@ export const Config = {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || "60000", 10),
     max: parseInt(process.env.RATE_LIMIT_MAX || "30", 10),
   },
+  // Bounds on the work a single screenshot request is allowed to cause. Each
+  // request holds a Chromium page open, so these cap memory and CPU per pod.
+  screenshot: {
+    minDimension: parseIntAtLeast(process.env.SCREENSHOT_MIN_DIMENSION, 320, 1),
+    maxDimension: parseIntAtLeast(
+      process.env.SCREENSHOT_MAX_DIMENSION,
+      4096,
+      1,
+    ),
+    maxConcurrency: parseIntAtLeast(
+      process.env.SCREENSHOT_MAX_CONCURRENCY,
+      4,
+      1,
+    ),
+    maxQueueDepth: parseIntAtLeast(
+      process.env.SCREENSHOT_MAX_QUEUE_DEPTH,
+      20,
+      0,
+    ),
+    requestTimeoutMs: parseIntAtLeast(
+      process.env.SCREENSHOT_REQUEST_TIMEOUT_MS,
+      120000,
+      1000,
+    ),
+  },
+  // Maximum accepted JSON request body size (passed to express.json)
+  requestBodyLimit: process.env.REQUEST_BODY_LIMIT || "100kb",
 };

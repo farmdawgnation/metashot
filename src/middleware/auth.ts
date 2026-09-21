@@ -9,12 +9,20 @@ export function authenticateToken(
   next: NextFunction,
 ): void {
   if (!Config.authToken) {
+    if (!Config.allowUnauthenticated) {
+      authAttempts.inc({ status: "failure_no_token_configured" });
+      res.status(401).json({
+        error: "Unauthorized",
+        message: "Authentication is not configured on this server",
+      });
+      return;
+    }
+
     authAttempts.inc({ status: "bypass_no_token_required" });
     return next();
   }
 
   const authHeader = req.headers.authorization;
-  const tokenQueryParam = req.query.token;
 
   if (!authHeader) {
     authAttempts.inc({ status: "failure_missing_header" });
@@ -80,22 +88,7 @@ export function authenticateToken(
     }
   }
 
-  if (tokenQueryParam) {
-    if (tokenQueryParam !== Config.authToken) {
-      authAttempts.inc({ status: "failure_invalid_token" });
-      res.status(401).json({
-        error: "Unauthorized",
-        message: "Invalid token",
-      });
-      return;
-    }
-
-    authAttempts.inc({ status: "success" });
-    next();
-    return;
-  }
-
-  // Fallback: enforce existing Bearer-only error to preserve current behavior/tests
+  // Fallback: reject unsupported authorization formats
   authAttempts.inc({ status: "failure_invalid_format" });
   res.status(401).json({
     error: "Unauthorized",

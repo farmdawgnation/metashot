@@ -18,6 +18,8 @@ export default [
         Buffer: 'readonly',
         console: 'readonly',
         process: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
         ...tseslint.configs.recommended.globals,
         ...eslint.configs.recommended.globals,
         node: true,

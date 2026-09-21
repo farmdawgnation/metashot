@@ -19,7 +19,7 @@ export const createRequestLoggingMiddleware = (
     onFinished(res, () => {
       requestLogger.logRequest(
         req.method,
-        req.originalUrl,
+        req.path,
         res.statusCode,
         Date.now() - startTime,
       );

@@ -23,7 +23,7 @@ describe("request logging middleware", () => {
     expect(logRequest).toHaveBeenCalledTimes(1);
     const [method, url, statusCode, responseTime] = logRequest.mock.calls[0];
     expect(method).toBe("GET");
-    expect(url).toBe("/test?foo=bar");
+    expect(url).toBe("/test");
     expect(statusCode).toBe(200);
     expect(typeof responseTime).toBe("number");
   });

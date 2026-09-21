@@ -32,6 +32,8 @@ podAnnotations: {}
 # -- Security context for the pod
 podSecurityContext:
   fsGroup: 1001
+  seccompProfile:
+    type: RuntimeDefault
 
 # -- Security context for the container
 securityContext:
@@ -39,9 +41,19 @@ securityContext:
   capabilities:
     drop:
     - ALL
-  readOnlyRootFilesystem: false
+  readOnlyRootFilesystem: true
   runAsNonRoot: true
   runAsUser: 1001
+
+# -- Mounts a writable emptyDir at /tmp for the Chromium browser's profile/cache data.
+# Required when securityContext.readOnlyRootFilesystem is true (the default), since
+# Playwright/Chromium need a writable temp directory even though the rest of the
+# container filesystem is read-only.
+tmpVolume:
+  # -- Enable the /tmp emptyDir mount
+  enabled: true
+  # -- Size limit for the /tmp emptyDir volume
+  sizeLimit: "512Mi"
 
 service:
   # -- Kubernetes service type
@@ -130,6 +142,17 @@ env:
   
   # -- Expiry time in seconds for presigned URLs
   PRESIGNED_URL_EXPIRY: "3600"
+
+  # Screenshot resource limits (optional; shown with their defaults).
+  # Tune SCREENSHOT_MAX_CONCURRENCY alongside `resources` - each concurrent
+  # screenshot holds a Chromium page open.
+  # SCREENSHOT_MAX_CONCURRENCY: "4"
+  # SCREENSHOT_MAX_QUEUE_DEPTH: "20"
+  # SCREENSHOT_REQUEST_TIMEOUT_MS: "120000"
+  # SCREENSHOT_MIN_DIMENSION: "320"
+  # SCREENSHOT_MAX_DIMENSION: "4096"
+  # RATE_LIMIT_WINDOW_MS: "60000"
+  # RATE_LIMIT_MAX: "30"
 
 # -- Environment variables from external sources (secrets, configmaps, etc.)
 # This allows injecting environment variables from different sources.

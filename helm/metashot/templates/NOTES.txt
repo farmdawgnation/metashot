@@ -42,7 +42,9 @@
    Authorization: Bearer <your-token>
 {{- else }}
 4. Authentication:
-   Authentication is not configured. Set env.AUTH_TOKEN or use envFrom to provide AUTH_TOKEN to enable authentication.
+   AUTH_TOKEN is not configured. The pod will refuse to start unless
+   ALLOW_UNAUTHENTICATED=true is set (dev-only). Set env.AUTH_TOKEN or use
+   envFrom to provide AUTH_TOKEN.
 {{- end }}
 
 5. Environment Configuration:

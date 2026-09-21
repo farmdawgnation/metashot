@@ -62,7 +62,7 @@ Returns API information.
 Generate a screenshot from a Metabase question.
 
 **Authentication:**
-If `AUTH_TOKEN` is configured, requests must include either of the following headers:
+`AUTH_TOKEN` is required. Requests must include either of the following headers:
 
 - Bearer token
   ```
@@ -76,6 +76,7 @@ If `AUTH_TOKEN` is configured, requests must include either of the following hea
 
 Notes:
 - Only the password portion of Basic auth is validated and must equal `AUTH_TOKEN`.
+- If `AUTH_TOKEN` is unset, the server **refuses to start** unless `ALLOW_UNAUTHENTICATED=true` is set explicitly. That opt-out disables authentication and makes the API fully public — intended for local development only, never production.
 - Health (`/api/health`) and metrics (`/metrics`) are always public.
 
 **Request Body:**
@@ -91,10 +92,17 @@ Notes:
 ```
 
 **Parameters:**
-- `questionId` (required): The ID of the Metabase question to screenshot
-- `width` (optional): Viewport width in pixels (default: 1920)
-- `height` (optional): Viewport height in pixels (default: 1080)
+- `questionId` (required): The ID of the Metabase question to screenshot. Must be a positive integer.
+- `width` (optional): Viewport width in pixels (default: 1920). Clamped to `SCREENSHOT_MIN_DIMENSION`-`SCREENSHOT_MAX_DIMENSION` (default: 320-4096).
+- `height` (optional): Viewport height in pixels (default: 1080). Clamped to the same range as `width`.
 - `params` (optional): Object containing Metabase parameters to pass to the question
+
+**Errors:**
+- `400 BadRequest` - The body is not a JSON object, `questionId` is missing or not a positive integer, or `width`/`height`/`params` have the wrong type
+- `401 Unauthorized` - `AUTH_TOKEN` is configured and the request did not present it
+- `429 TooManyRequests` - The per-IP rate limit was exceeded (see `RATE_LIMIT_*`)
+- `503 ServiceUnavailable` - All rendering slots and the wait queue are full; retry after the `Retry-After` interval
+- `504 GatewayTimeout` - The screenshot took longer than `SCREENSHOT_REQUEST_TIMEOUT_MS`
 
 **Response:**
 ```json
@@ -243,9 +251,10 @@ The generated embed URLs include:
 Environment variables:
 - `PORT` - Server port (default: 8080)
 - `NODE_ENV` - Environment (development/production)
-- `AUTH_TOKEN` - Token required for API authentication (optional). When set, clients may authenticate with either:
+- `AUTH_TOKEN` - Token required for API authentication. The server refuses to start without it unless `ALLOW_UNAUTHENTICATED=true` (dev-only opt-out). Clients authenticate with either:
   - `Authorization: Bearer <AUTH_TOKEN>` or
   - `Authorization: Basic <base64(any:AUTH_TOKEN)>` (only the password is checked)
+- `ALLOW_UNAUTHENTICATED` - Explicit opt-out allowing the server to run without `AUTH_TOKEN` (`true`/`false`, default: `false`). When set with no token, all `/api/*` routes are public. Never enable in production.
 - `METABASE_SITE_URL` - Base URL of your Metabase instance (e.g., https://metabase.example.com)
 - `METABASE_SECRET_KEY` - Secret key for generating Metabase embed tokens (found in Metabase Admin > Settings > Embedding)
 - `S3_ENDPOINT` - S3 endpoint URL (optional, defaults to AWS S3; set for MinIO or other S3-compatible services)
@@ -254,10 +263,23 @@ Environment variables:
 - `S3_BUCKET` - S3 bucket name
 - `S3_REGION` - S3 region
 - `PRESIGNED_URL_EXPIRY` - Presigned URL expiry in seconds (default: 3600, 1 hour)
+- `TRUST_PROXY` - Trust `X-Forwarded-For` when behind a reverse proxy, so rate limiting sees the real client IP (default: `false`)
+- `RATE_LIMIT_WINDOW_MS` - Rate limit window for `/api/screenshot` in milliseconds (default: 60000)
+- `RATE_LIMIT_MAX` - Requests allowed per IP per window (default: 30)
+- `SCREENSHOT_MIN_DIMENSION` - Lower bound for requested viewport dimensions (default: 320)
+- `SCREENSHOT_MAX_DIMENSION` - Upper bound for requested viewport dimensions (default: 4096)
+- `SCREENSHOT_MAX_CONCURRENCY` - Screenshots rendered at the same time (default: 4)
+- `SCREENSHOT_MAX_QUEUE_DEPTH` - Requests allowed to wait for a rendering slot before new ones are rejected with `503` (default: 20)
+- `SCREENSHOT_REQUEST_TIMEOUT_MS` - Overall deadline for a single screenshot request, after which it fails with `504` (default: 120000)
+- `REQUEST_BODY_LIMIT` - Maximum accepted JSON request body size (default: `100kb`)
 - `TRACING_ENABLED` - Enable OpenTelemetry tracing (`true`/`false`, default: `false`)
 - `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` or `OTEL_EXPORTER_OTLP_ENDPOINT` - OTLP collector traces endpoint (default: `http://localhost:4318/v1/traces`).
 
 > **Security Note on Telemetry & Tracing:**
 > - Metashot automatically redacts signed Metabase embed URLs and sensitive JWT tokens from trace span attributes, error messages, and log outputs to prevent credential leakage into telemetry backends.
 > - In production environments, OTLP collector endpoints must use TLS (`https://`) to secure telemetry data in transit.
+
+> **Security Note on Browser Hardening:**
+> - Metabase page content (dashboard cards, markdown, custom visualizations) is rendered by users of that Metabase instance and is treated as semi-untrusted. The screenshot renderer restricts in-browser navigation and subresource requests to the origin of `METABASE_SITE_URL`; anything that would leave that origin (a redirect, an injected link, a cross-origin fetch) is aborted rather than followed.
+> - The Chromium browser runs with `--no-sandbox` because its own sandbox requires either the SUID sandbox helper (which needs `allowPrivilegeEscalation: true`) or unprivileged user namespaces (not reliably available on every Kubernetes node). Instead, the container is hardened at the pod/container level: non-root user, all capabilities dropped, no privilege escalation, a read-only root filesystem with only `/tmp` writable, and the `RuntimeDefault` seccomp profile. See the [Helm chart's Security Hardening docs](./helm/metashot/README.md#security-hardening) for the full rationale and an example egress `NetworkPolicy`.
 
